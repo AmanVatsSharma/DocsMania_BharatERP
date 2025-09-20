@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// datasource and generator
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// v0 models
+model Document {
+  id        String   @id @default(uuid())
+  title     String
+  slug      String   @unique
+  meta      Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions  DocumentVersion[]
+}
+
+model DocumentVersion {
+  id         String   @id @default(uuid())
+  document   Document @relation(fields: [documentId], references: [id])
+  documentId String
+  version    Int
+  content    Json     // Tiptap JSON + section layout
+  createdAt  DateTime @default(now())
+
+  @@unique([documentId, version])
+}
+
+model ComponentType {
+  id            String @id @default(uuid())
+  key           String @unique
+  name          String
+  schema        Json   // JSON schema (Zod-compatible) for props
+  defaultConfig Json
+  styleOptions  Json?
+}
