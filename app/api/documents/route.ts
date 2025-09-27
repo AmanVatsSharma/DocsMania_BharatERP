@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
       documents = await (prisma as any).document.findMany({
         where,
         orderBy: { updatedAt: "desc" },
+        include: { project: { select: { key: true, name: true } } },
       });
     } catch (typedError: any) {
       logger.warn("GET /api/documents typed client failed, falling back to raw", { code: typedError?.code, message: typedError?.message });
