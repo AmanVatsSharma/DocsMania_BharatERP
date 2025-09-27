@@ -50,7 +50,6 @@ Build Wix/Shopify-like visual pages with custom component sections and rich, Wor
 │   ├── schema.prisma             # Prisma schema
 │   └── migrations/               # Generated migrations
 ├── infra/
-│   ├── docker-compose.yml        # Postgres, optional MinIO/S3
 │   └── k8s/                      # Optional deployment manifests
 ├── docs/                         # Cross-cutting docs (kept concise; module docs live with code)
 └── README.md
@@ -322,12 +321,12 @@ Implementation options:
 
 ### Prerequisites
 
-- Node.js 20+, pnpm (or yarn/npm)
-- Docker (for Postgres, optionally MinIO)
+- Node.js 20+
+- An external PostgreSQL database (provide DATABASE_URL)
 
 ### Environment
 
-Create `.env` in repo root:
+Create `.env` in repo root (use your external DB URL):
 
 ```
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/doc_creator?schema=public"
@@ -341,19 +340,22 @@ S3_ACCESS_KEY_ID="minioadmin"
 S3_SECRET_ACCESS_KEY="minioadmin"
 ```
 
-### Run services
+### Database & Prisma (npm)
 
 ```
-# Start Postgres (and optional MinIO) via Docker
-pnpm i
-docker compose -f infra/docker-compose.yml up -d
+npm install
 
-# Generate Prisma client and apply migrations
-pnpm prisma generate
-pnpm prisma migrate dev
+# Generate Prisma client
+npm run prisma:generate
 
-# Start Next.js app (to be added under apps/web)
-pnpm --filter @doc-creator/web dev
+# If you have migrations in prisma/migrations, apply them
+npm run prisma:migrate:deploy
+
+# If you have no migrations yet and want to sync schema
+npm run prisma:db:push
+
+# Optional: check DB connectivity
+curl -s http://localhost:3000/api/health/db | jq
 ```
 
 ---

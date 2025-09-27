@@ -18,12 +18,19 @@ datasource db {
 model Document {
   id        String   @id @default(uuid())
   title     String
-  slug      String   @unique
+  slug      String
   meta      Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  project   Project  @relation(fields: [projectId], references: [id])
+  projectId String
+
   versions  DocumentVersion[]
+  outgoingLinks DocLink[] @relation("LinkSource")
+  incomingLinks DocLink[] @relation("LinkTarget")
+
+  @@unique([projectId, slug])
 }
 
 model DocumentVersion {
@@ -35,6 +42,28 @@ model DocumentVersion {
   createdAt  DateTime @default(now())
 
   @@unique([documentId, version])
+}
+
+model Project {
+  id          String    @id @default(uuid())
+  key         String    @unique
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  documents   Document[]
+}
+
+model DocLink {
+  id        String   @id @default(uuid())
+  source    Document @relation("LinkSource", fields: [sourceId], references: [id])
+  sourceId  String
+  target    Document @relation("LinkTarget", fields: [targetId], references: [id])
+  targetId  String
+  type      String
+  notes     String?
+  createdAt DateTime @default(now())
 }
 
 model ComponentType {

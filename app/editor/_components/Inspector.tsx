@@ -18,6 +18,7 @@ export interface InspectorProps {
   onDeleteSection: () => void;
   rawPropsMode: boolean;
   setRawPropsMode: (v: boolean) => void;
+  bottomExtra?: React.ReactNode;
 }
 
 /**
@@ -192,6 +193,23 @@ export default function Inspector(props: InspectorProps) {
           <span>Border Width (px)</span>
           <input type="number" value={style.borderWidth ?? 1} onChange={(e) => setStyleField("borderWidth", Number(e.target.value))} className="rounded border px-2 py-1" />
         </label>
+        <label className="grid gap-1">
+          <span>Accent Color</span>
+          <input type="color" value={style.accentColor ?? "#0ea5e9"} onChange={(e) => setStyleField("accentColor", e.target.value)} />
+        </label>
+        <label className="grid gap-1">
+          <span>Radius (px)</span>
+          <input type="number" value={style.borderRadius ?? 12} onChange={(e) => setStyleField("borderRadius", Number(e.target.value))} className="rounded border px-2 py-1" />
+        </label>
+        <label className="grid gap-1">
+          <span>Shadow</span>
+          <select value={style.shadow ?? "sm"} onChange={(e) => setStyleField("shadow", e.target.value)} className="rounded border px-2 py-1">
+            <option value="none">None</option>
+            <option value="sm">Small</option>
+            <option value="md">Medium</option>
+            <option value="lg">Large</option>
+          </select>
+        </label>
       </div>
     );
   }
@@ -212,6 +230,7 @@ export default function Inspector(props: InspectorProps) {
 
       {/* Resizer */}
       <div onMouseDown={onMouseDownResizer} style={{ left: -3 }} className="absolute top-0 h-full w-1.5 cursor-col-resize" />
+      {props.bottomExtra}
     </div>
   );
 }

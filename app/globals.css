@@ -5,6 +5,31 @@
   --foreground: #111827;
   --muted: #f4f4f5;
   --border: #e5e7eb;
+  --accent: #0ea5e9; /* sky-500 */
+  --accent-foreground: #ffffff;
+  /* Typography tokens */
+  --font-family-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  --font-family-serif: Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 32px;
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+  --leading-loose: 1.9;
+
+  --tracking-tight: -0.5px;
+  --tracking-normal: 0px;
+  --tracking-wide: 0.5px;
+  --tracking-wider: 1px;
+  --tracking-widest: 2px;
 }
 
 @theme inline {
@@ -20,13 +45,15 @@
     --foreground: #f4f4f5;
     --muted: #18181b;
     --border: #27272a;
+    --accent: #38bdf8; /* sky-400 */
+    --accent-foreground: #0b0b0f;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  font-family: var(--font-family-sans);
 }
 
 /* Editor surface refinements */
@@ -36,6 +63,8 @@ body {
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
   border-radius: 12px;
 }
+.dc-surface .ProseMirror table { max-width: 100%; display: table; }
+.dc-surface .ProseMirror [data-overflow-x="true"] { overflow-x: auto; }
 
 .dc-panel {
   background: #ffffff;
@@ -48,3 +77,107 @@ body {
 }
 
 .dc-divider { background: var(--border); }
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.btn-primary:hover { filter: brightness(0.95); }
+.btn-primary:active { transform: scale(0.99); }
+
+/* Tables: shared visual styles for editor (and can help in viewer if SSR css is shared) */
+table[data-border-style="grid"] td,
+table[data-border-style="grid"] th { border: 1px solid var(--border); }
+
+table[data-border-style="row"] td,
+table[data-border-style="row"] th { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+table[data-border-style="col"] td,
+table[data-border-style="col"] th { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+
+table[data-compact="true"] td,
+table[data-compact="true"] th { padding: 4px; }
+
+table[data-zebra="true"] tr:nth-child(even) td,
+table[data-zebra="true"] tr:nth-child(even) th { background: color-mix(in oklab, var(--border), transparent 85%); }
+
+/* Sticky header support (editor) */
+table[data-sticky-header="true"] thead th {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 2;
+}
+/* Fallback for Tiptap editor DOM which may not render thead */
+table[data-sticky-header="true"] tbody tr:first-child th {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 2;
+}
+
+/* Sticky first column (editor) */
+table[data-sticky-first-col="true"] tr > *:first-child {
+  position: sticky;
+  left: 0;
+  background: white;
+  z-index: 1;
+}
+/* Sticky first N columns (editor) */
+table[data-sticky-first-n] tr > * {
+  position: sticky;
+  background: white;
+  z-index: 1;
+}
+/* Approximate left offset; precise offsets handled by table layout */
+table[data-sticky-first-n] tr > *:nth-child(1) { left: 0; }
+table[data-sticky-first-n="2"] tr > *:nth-child(2) { left: 120px; }
+table[data-sticky-first-n="3"] tr > *:nth-child(3) { left: 240px; }
+
+/* ProseMirror table cell selection highlight */
+.ProseMirror .selectedCell {
+  background: color-mix(in oklab, var(--accent), transparent 85%);
+}
+
+/* Ensure visible cells in editor canvas */
+.dc-surface .ProseMirror table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+.dc-surface .ProseMirror table[data-border-style] td,
+.dc-surface .ProseMirror table[data-border-style] th { padding: 8px; }
+/* Fallback padding if attribute is missing (defensive) */
+.dc-surface .ProseMirror table:not([data-border-style]) td,
+.dc-surface .ProseMirror table:not([data-border-style]) th { padding: 8px; border: 1px solid var(--border); }
+/* Explicit none overrides */
+table[data-border-style="none"] td,
+table[data-border-style="none"] th { border: none !important; }
+/* Always show borders in editor preview; 'none' overrides above can disable */
+.dc-surface .ProseMirror table td,
+.dc-surface .ProseMirror table th { border: 1px solid var(--border); }
+
+/* Column resize handles (ProseMirror tables) */
+.ProseMirror td,
+.ProseMirror th { position: relative; }
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: color-mix(in oklab, var(--accent), transparent 70%);
+  z-index: 3;
+  pointer-events: auto;
+}
+.ProseMirror.resize-cursor,
+.ProseMirror .resize-cursor { cursor: col-resize; }
+
+/* Row resize cursor when dragging bottom edge of a row */
+.row-resize-cursor { cursor: row-resize !important; }
+.dc-surface .ProseMirror tr { position: relative; }
+.dc-surface .ProseMirror tr::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 9px;
+  background: transparent;
+}

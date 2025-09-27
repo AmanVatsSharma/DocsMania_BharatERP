@@ -14,9 +14,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const doc = await prisma.document.findUnique({
+    const doc = await (prisma as any).document.findUnique({
       where: { id: params.id },
-      include: { versions: { orderBy: { version: "desc" }, take: 5 } },
+      // include: { project: { select: { key: true, name: true } }, versions: { orderBy: { version: "desc" }, take: 5 } },
     });
     if (!doc) {
       return NextResponse.json(
@@ -55,14 +55,18 @@ export async function PATCH(
 
     const updated = await prisma.document.update({
       where: { id: params.id },
-      data: { title, meta },
+      data: { ...(title !== undefined ? { title } : {}), ...(meta !== undefined ? { meta } : {}) },
     });
 
     if (content !== undefined) {
-      await prisma.document.update({
+      // Merge draft content into meta, treating null/primitive as empty object
+      const base = updated.meta && typeof updated.meta === "object" ? (updated.meta as any) : {};
+      const merged = { ...base, draftContent: content } as any;
+      const after = await prisma.document.update({
         where: { id: params.id },
-        data: { meta: { ...(updated.meta as any), draftContent: content } as any },
+        data: { meta: merged },
       });
+      return NextResponse.json({ ok: true, data: after });
     }
 
     return NextResponse.json({ ok: true, data: updated });

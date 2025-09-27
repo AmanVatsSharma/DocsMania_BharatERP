@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ChevronRight, Command, ImagePlus, Rocket, Search, Loader2 } from "lucide-react";
+import AccentPicker from "@/app/editor/_components/AccentPicker";
 import { clsx } from "clsx";
 
 export interface TopBarProps {
@@ -10,6 +11,8 @@ export interface TopBarProps {
   onInsertImageClick: () => void;
   onPublish: () => void;
   onOpenCommandPalette?: () => void;
+  onOpenHelp?: () => void;
+  onView?: () => void;
 }
 
 /**
@@ -20,7 +23,7 @@ export interface TopBarProps {
  * - Saving indicator
  */
 export default function TopBar(props: TopBarProps) {
-  const { title, saving, onInsertImageClick, onPublish, onOpenCommandPalette } = props;
+  const { title, saving, onInsertImageClick, onPublish, onOpenCommandPalette, onOpenHelp, onView } = props;
 
   function handleOpenPalette() {
     try {
@@ -106,6 +109,35 @@ export default function TopBar(props: TopBarProps) {
         >
           <Rocket className="h-4 w-4" />
           Publish
+        </button>
+
+        {/* View */}
+        <button
+          type="button"
+          onClick={() => {
+            try {
+              console.info("[TopBar] View click");
+              onView?.();
+            } catch (e) {
+              console.error("[TopBar] View error", e);
+            }
+          }}
+          className={clsx(
+            "ml-2 inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-sm",
+            "text-zinc-700 hover:bg-zinc-50 active:scale-[0.99]"
+          )}
+        >
+          View
+        </button>
+
+        <AccentPicker />
+
+        <button
+          type="button"
+          onClick={() => onOpenHelp?.()}
+          className="ml-2 inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 active:scale-[0.99]"
+        >
+          Help
         </button>
 
         {/* Saving indicator */}

@@ -23,6 +23,7 @@ export interface LeftSidebarProps {
   onLibraryQueryChange: (v: string) => void;
   onDragStartComponent: (e: React.DragEvent, c: ComponentDef) => void;
   onOutlineJump: (pos: number) => void;
+  onOutlineMove?: (pos: number, dir: -1 | 1) => void;
   outlineItems: Array<{ index: number; preview: string; pos: number }>;
   activeTab: "library" | "outline";
   onChangeTab: (tab: "library" | "outline") => void;
@@ -42,6 +43,7 @@ export default function LeftSidebar(props: LeftSidebarProps) {
     onLibraryQueryChange,
     onDragStartComponent,
     onOutlineJump,
+    onOutlineMove,
     outlineItems,
     activeTab,
     onChangeTab,
@@ -122,21 +124,27 @@ export default function LeftSidebar(props: LeftSidebarProps) {
             <ScrollArea.Viewport className="h-full w-full">
               <ul className="space-y-1 p-3">
                 {outlineItems.map((s) => (
-                  <li key={s.pos}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        try {
-                          console.info("[LeftSidebar] Jump to", s.pos);
-                          onOutlineJump(s.pos);
-                        } catch (e) {
-                          console.error("[LeftSidebar] Outline nav error", e);
-                        }
-                      }}
-                      className="w-full truncate rounded-md border px-2 py-1.5 text-left text-sm hover:bg-zinc-50"
-                    >
-                      {s.index + 1}. {s.preview}
-                    </button>
+                  <li key={s.pos} className="flex items-center gap-1">
+                    <div className="flex-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          try {
+                            console.info("[LeftSidebar] Jump to", s.pos);
+                            onOutlineJump(s.pos);
+                          } catch (e) {
+                            console.error("[LeftSidebar] Outline nav error", e);
+                          }
+                        }}
+                        className="w-full truncate rounded-md border px-2 py-1.5 text-left text-sm hover:bg-zinc-50"
+                      >
+                        {s.index + 1}. {s.preview}
+                      </button>
+                    </div>
+                    <div className="flex gap-1">
+                      <button title="Move up" className="rounded border border-[var(--border)] px-2 py-1 text-xs" onClick={() => onOutlineMove?.(s.pos, -1)}>↑</button>
+                      <button title="Move down" className="rounded border border-[var(--border)] px-2 py-1 text-xs" onClick={() => onOutlineMove?.(s.pos, 1)}>↓</button>
+                    </div>
                   </li>
                 ))}
               </ul>

@@ -3,6 +3,7 @@ import { Node, mergeAttributes } from "@tiptap/core";
 export interface SectionAttrs {
   componentKey: string;
   props: Record<string, unknown> | null;
+  componentName?: string | null;
 }
 
 declare module "@tiptap/core" {
@@ -38,6 +39,11 @@ export const Section = Node.create({
           }
         },
         renderHTML: (attrs) => ({ "data-props": attrs.props ? JSON.stringify(attrs.props) : undefined }),
+      },
+      componentName: {
+        default: null,
+        parseHTML: (el) => (el as HTMLElement).getAttribute("data-component-name"),
+        renderHTML: (attrs) => ({ "data-component-name": attrs.componentName ?? undefined }),
       },
     };
   },
