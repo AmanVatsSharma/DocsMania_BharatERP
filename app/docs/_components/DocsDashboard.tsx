@@ -327,11 +327,29 @@ export default function DocsDashboard() {
                     Edit
                   </button>
                   <button
-                    onClick={() => {
-                      // eslint-disable-next-line no-console
-                      console.info("[DocsDashboard] View click", d);
-                      const pk = d.project?.key;
-                      if (pk) router.push(`/p/${pk}/${d.slug}`);
+                    onClick={async () => {
+                      try {
+                        // eslint-disable-next-line no-console
+                        console.info("[DocsDashboard] View click", d);
+                        let pk = d.project?.key;
+                        if (!pk) {
+                          // Fallback: fetch single document to obtain project key
+                          const res = await fetch(`/api/documents/${d.id}`, { cache: "no-store" });
+                          const json = await res.json().catch(() => ({}));
+                          if (res.ok && json?.ok) pk = json?.data?.project?.key;
+                        }
+                        if (pk) {
+                          router.push(`/p/${pk}/${d.slug}`);
+                        } else {
+                          // eslint-disable-next-line no-console
+                          console.warn("[DocsDashboard] Missing project key for view", d);
+                          toast.error("Cannot determine project for this document");
+                        }
+                      } catch (e) {
+                        // eslint-disable-next-line no-console
+                        console.error("[DocsDashboard] View click error", e);
+                        toast.error("Failed to open document");
+                      }
                     }}
                     className="px-3 py-1.5 text-xs rounded-md border border-[var(--border)] hover:bg-zinc-50"
                   >

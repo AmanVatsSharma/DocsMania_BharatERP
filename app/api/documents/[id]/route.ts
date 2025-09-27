@@ -14,10 +14,26 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const doc = await (prisma as any).document.findUnique({
-      where: { id: params.id },
-      // include: { project: { select: { key: true, name: true } }, versions: { orderBy: { version: "desc" }, take: 5 } },
-    });
+    let doc: any = null;
+    try {
+      doc = await (prisma as any).document.findUnique({
+        where: { id: params.id },
+        include: { project: { select: { key: true, name: true } } },
+      });
+    } catch (typedError: any) {
+      logger.warn("GET /api/documents/[id] typed client failed; falling back to raw", { code: typedError?.code, message: typedError?.message });
+      const rows = await prisma.$queryRaw<Array<{ id: string; title: string; slug: string; meta: any; projectKey: string; projectName: string }>>`
+        SELECT d."id", d."title", d."slug", d."meta", p."key" AS "projectKey", p."name" AS "projectName"
+        FROM "Document" d
+        JOIN "Project" p ON p."id" = d."projectId"
+        WHERE d."id" = ${params.id}
+        LIMIT 1
+      `;
+      const row = rows[0];
+      if (row) {
+        doc = { id: row.id, title: row.title, slug: row.slug, meta: row.meta, project: { key: row.projectKey, name: row.projectName } } as any;
+      }
+    }
     if (!doc) {
       return NextResponse.json(
         { ok: false, error: { code: "NOT_FOUND", message: "Document not found" } },
