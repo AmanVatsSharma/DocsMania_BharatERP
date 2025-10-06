@@ -103,3 +103,20 @@ model DataQuery {
   
   @@index([dataSourceId])
 }
+
+model CustomComponent {
+  id            String   @id @default(uuid())
+  key           String   @unique
+  name          String
+  description   String
+  category      String   @default("Custom")
+  tags          String   // JSON array of tags
+  code          String   @db.Text // React JSX code
+  schema        String   @db.Text // JSON props schema
+  defaultConfig String   @db.Text // JSON default configuration
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([category])
+  @@index([key])
+}
