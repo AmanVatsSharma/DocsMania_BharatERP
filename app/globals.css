@@ -54,29 +54,99 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-family-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Editor surface refinements */
+/* Modern Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+/* Glassmorphism utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+/* Editor surface refinements - Modern glass style */
 .dc-surface {
   background: #ffffff;
   border: 1px solid var(--border);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-  border-radius: 12px;
+  box-shadow: 
+    0 1px 3px rgba(0,0,0,0.06),
+    0 1px 2px rgba(0,0,0,0.04);
+  border-radius: 16px;
+  transition: box-shadow 200ms ease;
 }
+
+.dc-surface:hover {
+  box-shadow: 
+    0 4px 6px rgba(0,0,0,0.07),
+    0 2px 4px rgba(0,0,0,0.05);
+}
+
 .dc-surface .ProseMirror table { max-width: 100%; display: table; }
 .dc-surface .ProseMirror [data-overflow-x="true"] { overflow-x: auto; }
 
+/* Modern panel styles with subtle gradients */
 .dc-panel {
-  background: #ffffff;
+  background: linear-gradient(to bottom, #ffffff 0%, #fafafa 100%);
   border-right: 1px solid var(--border);
+  box-shadow: 2px 0 8px rgba(0,0,0,0.02);
 }
 
 .dc-panel-right {
-  background: #ffffff;
+  background: linear-gradient(to bottom, #ffffff 0%, #fafafa 100%);
   border-left: 1px solid var(--border);
+  box-shadow: -2px 0 8px rgba(0,0,0,0.02);
 }
 
-.dc-divider { background: var(--border); }
+.dc-divider { 
+  background: linear-gradient(to right, transparent, var(--border), transparent);
+  height: 1px;
+}
+
+/* Floating elements */
+.floating {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
 
 .btn-primary {
   background: var(--accent);

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ChevronRight, Command, ImagePlus, Rocket, Search, Loader2 } from "lucide-react";
+import { ChevronRight, Command, ImagePlus, Rocket, Search, Loader2, Sparkles, Layout } from "lucide-react";
 import AccentPicker from "@/app/editor/_components/AccentPicker";
 import { clsx } from "clsx";
 
@@ -13,6 +13,8 @@ export interface TopBarProps {
   onOpenCommandPalette?: () => void;
   onOpenHelp?: () => void;
   onView?: () => void;
+  onOpenMediaManager?: () => void;
+  onOpenTemplates?: () => void;
 }
 
 /**
@@ -23,7 +25,7 @@ export interface TopBarProps {
  * - Saving indicator
  */
 export default function TopBar(props: TopBarProps) {
-  const { title, saving, onInsertImageClick, onPublish, onOpenCommandPalette, onOpenHelp, onView } = props;
+  const { title, saving, onInsertImageClick, onPublish, onOpenCommandPalette, onOpenHelp, onView, onOpenMediaManager, onOpenTemplates } = props;
 
   function handleOpenPalette() {
     try {
@@ -71,24 +73,31 @@ export default function TopBar(props: TopBarProps) {
           </div>
         </button>
 
-        {/* Insert image */}
+        {/* Quick actions */}
         <button
           type="button"
-          onClick={() => {
-            try {
-              console.info("[TopBar] Insert Image click");
-              onInsertImageClick();
-            } catch (e) {
-              console.error("[TopBar] Insert Image error", e);
-            }
-          }}
+          onClick={() => onOpenMediaManager?.()}
           className={clsx(
             "ml-2 inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-sm",
             "text-zinc-700 hover:bg-zinc-50 active:scale-[0.99]"
           )}
+          title="Media Library"
         >
           <ImagePlus className="h-4 w-4" />
-          Image
+          Media
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onOpenTemplates?.()}
+          className={clsx(
+            "inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-sm",
+            "text-zinc-700 hover:bg-zinc-50 active:scale-[0.99]"
+          )}
+          title="Document Templates"
+        >
+          <Sparkles className="h-4 w-4" />
+          Templates
         </button>
 
         {/* Publish */}

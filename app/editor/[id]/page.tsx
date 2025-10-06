@@ -40,6 +40,8 @@ import logger from "@/lib/logger";
 import HelpOverlay from "@/app/editor/_components/HelpOverlay";
 import { replaceCurrentTableWithMatrix } from "@/lib/tableUtils";
 import { TextSelection } from "prosemirror-state";
+import MediaManager from "@/app/editor/_components/MediaManager";
+import BlockTemplates from "@/app/editor/_components/BlockTemplates";
 
 // moved to lib/hooks.ts
 
@@ -80,6 +82,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [device, setDevice] = React.useState<DeviceKind>("desktop");
   const [slashOpen, setSlashOpen] = React.useState(false);
   const [helpOpen, setHelpOpen] = React.useState(false);
+  const [mediaManagerOpen, setMediaManagerOpen] = React.useState(false);
+  const [blockTemplatesOpen, setBlockTemplatesOpen] = React.useState(false);
   const leftResizerRef = React.useRef<HTMLDivElement | null>(null);
   const rightResizerRef = React.useRef<HTMLDivElement | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -812,6 +816,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }}
         onOpenCommandPalette={() => setCmdkOpen(true)}
         onOpenHelp={() => setHelpOpen(true)}
+        onOpenMediaManager={() => setMediaManagerOpen(true)}
+        onOpenTemplates={() => setBlockTemplatesOpen(true)}
       />
       <CommandPalette
         open={isCmdkOpen}
@@ -824,6 +830,22 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       />
       <SlashMenu editor={editor} components={components as any} open={slashOpen} setOpen={setSlashOpen} />
       <HelpOverlay open={helpOpen} onOpenChange={setHelpOpen} />
+      <MediaManager 
+        open={mediaManagerOpen} 
+        onOpenChange={setMediaManagerOpen}
+        onInsertMedia={(url) => {
+          editor?.chain().focus().setImage({ src: url }).run();
+          toast.success("Image inserted");
+        }}
+      />
+      <BlockTemplates
+        open={blockTemplatesOpen}
+        onOpenChange={setBlockTemplatesOpen}
+        onApplyTemplate={(content) => {
+          editor?.commands.setContent(content);
+          toast.success("Template applied");
+        }}
+      />
       <input ref={fileInputRef} onChange={onFileChange} type="file" accept="image/*" style={{ display: "none" }} />
 
       {/* Toolbar */}
