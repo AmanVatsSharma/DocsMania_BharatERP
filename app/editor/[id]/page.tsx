@@ -11,7 +11,7 @@ import TableRowExtended from "@/lib/TableRowExtended";
 import TableHeader from "@tiptap/extension-table-header";
 import TableInspector from "@/app/editor/_components/TableInspector";
 import TableCellExtended from "@/lib/TableCellExtended";
-import { TextStyle } from "@tiptap/extension-text-style";
+import TextStyleExtended from "@/lib/TextStyleExtended";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import Color from "@tiptap/extension-color";
@@ -151,7 +151,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       TableRowExtended,
       TableHeader,
       TableCellExtended,
-      TextStyle,
+      TextStyleExtended,
       // Override base paragraph with enterprise attrs (indent, spacing)
       ParagraphExtended,
       Section.extend({
