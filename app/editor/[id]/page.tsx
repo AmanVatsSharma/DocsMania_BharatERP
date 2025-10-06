@@ -47,6 +47,9 @@ import { TextSelection } from "prosemirror-state";
 import MediaManager from "@/app/editor/_components/MediaManager";
 import BlockTemplates from "@/app/editor/_components/BlockTemplates";
 import DocumentSettings from "@/app/editor/_components/DocumentSettings";
+import TemplateManager from "@/app/editor/_components/TemplateManager";
+import ComponentBuilder from "@/app/editor/_components/ComponentBuilder";
+import CustomComponentLibrary from "@/app/editor/_components/CustomComponentLibrary";
 
 // moved to lib/hooks.ts
 
@@ -90,6 +93,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [mediaManagerOpen, setMediaManagerOpen] = React.useState(false);
   const [blockTemplatesOpen, setBlockTemplatesOpen] = React.useState(false);
   const [documentSettingsOpen, setDocumentSettingsOpen] = React.useState(false);
+  const [templateManagerOpen, setTemplateManagerOpen] = React.useState(false);
+  const [componentBuilderOpen, setComponentBuilderOpen] = React.useState(false);
+  const [customComponentLibraryOpen, setCustomComponentLibraryOpen] = React.useState(false);
   const [documentMeta, setDocumentMeta] = React.useState<any>({});
   const leftResizerRef = React.useRef<HTMLDivElement | null>(null);
   const rightResizerRef = React.useRef<HTMLDivElement | null>(null);
@@ -99,10 +105,22 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     setMounted(true);
   }, []);
 
+  // Fetch components (including custom components)
+  async function fetchComponents() {
+    try {
+      const res = await fetch("/api/components");
+      const data = await res.json();
+      if (data.ok) {
+        setComponents(data.data);
+        console.log(`[Editor] Loaded ${data.data.length} components`);
+      }
+    } catch (error) {
+      console.error("Load components error", error);
+    }
+  }
+
   React.useEffect(() => {
-    fetch("/api/components").then((r) => r.json()).then((j) => {
-      if (j.ok) setComponents(j.data);
-    }).catch((e) => console.error("Load components error", e));
+    fetchComponents();
   }, []);
 
   function startLeftResize(e: React.MouseEvent) {
@@ -844,10 +862,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         onOpenCommandPalette={() => setCmdkOpen(true)}
         onOpenHelp={() => setHelpOpen(true)}
         onOpenMediaManager={() => setMediaManagerOpen(true)}
-        onOpenTemplates={() => setBlockTemplatesOpen(true)}
+        onOpenTemplates={() => setTemplateManagerOpen(true)}
         onOpenSettings={() => setDocumentSettingsOpen(true)}
         onOpenDataSources={() => {}}
-        onOpenCustomComponents={() => {}}
+        onOpenCustomComponents={() => setCustomComponentLibraryOpen(true)}
         onShare={() => {}}
         onExport={() => {}}
       />
@@ -895,6 +913,50 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         currentSettings={documentMeta.displaySettings}
         onSave={saveDocumentSettings}
       />
+      
+      {/* Template Manager */}
+      <TemplateManager
+        open={templateManagerOpen}
+        onOpenChange={setTemplateManagerOpen}
+        currentDocument={editor?.getJSON()}
+        onApplyTemplate={(template) => {
+          if (template.content) {
+            editor?.commands.setContent(template.content);
+            toast.success(`Template "${template.name}" applied!`);
+          }
+        }}
+      />
+      
+      {/* Component Builder */}
+      <ComponentBuilder
+        open={componentBuilderOpen}
+        onOpenChange={setComponentBuilderOpen}
+        onSave={async (component) => {
+          // Reload components after saving
+          await fetchComponents();
+          // Reload custom components into registry
+          const { loadCustomComponents } = await import("@/app/editor/_registry/sections");
+          await loadCustomComponents();
+          toast.success(`Component "${component.name}" saved!`);
+          setComponentBuilderOpen(false);
+        }}
+      />
+      
+      {/* Custom Component Library */}
+      <CustomComponentLibrary
+        open={customComponentLibraryOpen}
+        onOpenChange={setCustomComponentLibraryOpen}
+        onEdit={(component) => {
+          setComponentBuilderOpen(true);
+          setCustomComponentLibraryOpen(false);
+        }}
+        onRefresh={async () => {
+          await fetchComponents();
+          const { loadCustomComponents } = await import("@/app/editor/_registry/sections");
+          await loadCustomComponents();
+        }}
+      />
+      
       <input ref={fileInputRef} onChange={onFileChange} type="file" accept="image/*" style={{ display: "none" }} />
 
       {/* Toolbar */}

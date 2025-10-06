@@ -120,3 +120,19 @@ model CustomComponent {
   @@index([category])
   @@index([key])
 }
+
+model Template {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  category    String   @default("Custom")
+  tags        String   // JSON array of tags
+  thumbnail   String?  // URL to thumbnail image
+  content     String   @db.Text // Tiptap JSON document structure
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([category])
+  @@index([isPublic])
+}
