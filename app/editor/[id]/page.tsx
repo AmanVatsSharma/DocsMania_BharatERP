@@ -23,9 +23,13 @@ import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import Section from "@/lib/SectionExtension";
 import ParagraphExtended from "@/lib/ParagraphExtended";
-import TopBar from "@/app/editor/_components/TopBar";
-import LeftSidebar from "@/app/editor/_components/LeftSidebar";
-import Inspector from "@/app/editor/_components/Inspector";
+// Enhanced Enterprise Components
+import TopBarEnhanced from "@/app/editor/_components/TopBarEnhanced";
+import LeftSidebarEnhanced from "@/app/editor/_components/LeftSidebarEnhanced";
+import InspectorEnhanced from "@/app/editor/_components/InspectorEnhanced";
+import FloatingToolbar from "@/app/editor/_components/FloatingToolbar";
+import { SavingIndicator, EmptyDocumentState } from "@/app/editor/_components/LoadingStates";
+import "@/app/editor/_styles/enterprise-editor.css";
 import Toolbar from "@/app/editor/_components/Toolbar";
 import DevicePreview, { type DeviceKind } from "@/app/editor/_components/DevicePreview";
 import CommandPalette from "@/app/editor/_components/CommandPalette";
@@ -817,9 +821,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <TopBar
+      <TopBarEnhanced
         title={title}
         saving={saving}
+        lastSaved={new Date()}
+        collaborators={0}
         onInsertImageClick={onInsertImageClick}
         onPublish={onPublish}
         onView={() => {
@@ -840,7 +846,21 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         onOpenMediaManager={() => setMediaManagerOpen(true)}
         onOpenTemplates={() => setBlockTemplatesOpen(true)}
         onOpenSettings={() => setDocumentSettingsOpen(true)}
+        onOpenDataSources={() => {}}
+        onOpenCustomComponents={() => {}}
+        onShare={() => {}}
+        onExport={() => {}}
       />
+      
+      {/* Floating Toolbar for text formatting */}
+      <FloatingToolbar
+        editor={editor}
+        isVisible={false}
+        position={null}
+      />
+      
+      {/* Saving Indicator */}
+      <SavingIndicator saving={saving} />
       <CommandPalette
         open={isCmdkOpen}
         setOpen={setCmdkOpen}
@@ -907,7 +927,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       </div>
 
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <LeftSidebar
+        <LeftSidebarEnhanced
           width={leftWidth}
           onMouseDownResizer={startLeftResize}
           components={components as any}
@@ -1018,15 +1038,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             </div>
           </DevicePreview>
         </div>
-        <Inspector
+        <InspectorEnhanced
           width={rightWidth}
           onMouseDownResizer={startRightResize}
-          tab={inspectorTab}
-          onChangeTab={setInspectorTab as any}
-          selectedSectionKey={selectedSectionKey}
-          selectedSectionProps={selectedSectionProps}
-          components={components}
-          onUpdateAttributes={(next) => {
+          selectedNode={selectedSectionProps ? { attrs: { props: selectedSectionProps, componentKey: selectedSectionKey } } : null}
+          onUpdateProps={(next) => {
             setSelectedSectionProps(next);
             try {
               editor?.chain().focus().updateAttributes("section", { props: next }).run();
@@ -1035,12 +1051,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
               console.error("[Inspector] update attributes error", e);
             }
           }}
-          onResetProps={resetProps}
-          onDuplicateSection={duplicateSection}
-          onDeleteSection={deleteSection}
-          rawPropsMode={rawPropsMode}
-          setRawPropsMode={setRawPropsMode}
-          bottomExtra={<TableInspector editor={editor} />}
+          onDeleteNode={deleteSection}
+          onDuplicateNode={duplicateSection}
+          tab={inspectorTab}
+          onChangeTab={setInspectorTab as any}
         />
       </div>
     </div>
