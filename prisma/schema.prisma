@@ -74,3 +74,32 @@ model ComponentType {
   defaultConfig Json
   styleOptions  Json?
 }
+
+model DataSource {
+  id        String   @id @default(uuid())
+  name      String
+  type      String   // 'sql', 'rest', 'graphql', 'json', 'csv'
+  config    String   // JSON string with connection details (encrypted)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  queries   DataQuery[]
+  
+  @@index([type])
+}
+
+model DataQuery {
+  id           String     @id @default(uuid())
+  name         String
+  dataSource   DataSource @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+  dataSourceId String
+  query        String     // SQL query, REST endpoint, or GraphQL query
+  params       String?    // JSON string with query parameters
+  transform    String?    // JavaScript transform function
+  cacheEnabled Boolean    @default(false)
+  cacheTTL     Int        @default(300) // seconds
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  @@index([dataSourceId])
+}
