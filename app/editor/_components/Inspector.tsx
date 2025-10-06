@@ -22,8 +22,9 @@ export interface InspectorProps {
 }
 
 /**
- * Polished inspector with Props/Layout/Style tabs.
- * Renders simple input widgets from ad-hoc schemas for demo purposes.
+ * Enterprise-grade inspector with Props/Layout/Style tabs.
+ * AI-friendly: Structured metadata for auto-generation
+ * Supports: text, number, boolean, select, color, object nesting
  */
 export default function Inspector(props: InspectorProps) {
   const {
@@ -44,7 +45,17 @@ export default function Inspector(props: InspectorProps) {
 
   function renderPropsEditor() {
     if (!selectedSectionKey || !selectedSectionProps) {
-      return <p className="px-3 py-2 text-sm text-zinc-500">Select a section to edit</p>;
+      return (
+        <div className="flex flex-col items-center justify-center p-6 text-center">
+          <div className="rounded-full bg-zinc-100 p-4">
+            <svg className="h-8 w-8 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+            </svg>
+          </div>
+          <p className="mt-3 text-sm font-medium text-zinc-700">No Block Selected</p>
+          <p className="mt-1 text-xs text-zinc-500">Select a block in the editor to customize its properties</p>
+        </div>
+      );
     }
     const def = components.find((c) => c.key === selectedSectionKey);
     const schema = (def?.schema ?? {}) as Record<string, any>;
@@ -215,12 +226,44 @@ export default function Inspector(props: InspectorProps) {
   }
 
   return (
-    <div style={{ width }} className="relative bg-white dc-panel-right">
+    <div style={{ width }} className="relative border-l border-zinc-200 bg-gradient-to-b from-white to-zinc-50/30 dc-panel-right">
       <Tabs.Root value={tab} onValueChange={(v) => onChangeTab(v as any)}>
-        <div className="flex items-center gap-2 border-b border-[var(--border)] px-3 py-2 text-sm">
-          <button onClick={() => onChangeTab("props")} className={clsx("rounded px-2 py-1", tab === "props" ? "bg-zinc-100 font-semibold" : "text-zinc-600 hover:bg-zinc-50")}>Props</button>
-          <button onClick={() => onChangeTab("layout")} className={clsx("rounded px-2 py-1", tab === "layout" ? "bg-zinc-100 font-semibold" : "text-zinc-600 hover:bg-zinc-50")}>Layout</button>
-          <button onClick={() => onChangeTab("style")} className={clsx("rounded px-2 py-1", tab === "style" ? "bg-zinc-100 font-semibold" : "text-zinc-600 hover:bg-zinc-50")}>Style</button>
+        <div className="border-b border-zinc-200 bg-white/50 px-3 py-2 backdrop-blur-sm">
+          <div className="flex items-center gap-1 text-sm">
+            <button 
+              onClick={() => onChangeTab("props")} 
+              className={clsx(
+                "flex-1 rounded-lg px-3 py-1.5 font-medium transition-all",
+                tab === "props" 
+                  ? "bg-zinc-900 text-white shadow-sm" 
+                  : "text-zinc-600 hover:bg-zinc-100"
+              )}
+            >
+              Props
+            </button>
+            <button 
+              onClick={() => onChangeTab("layout")} 
+              className={clsx(
+                "flex-1 rounded-lg px-3 py-1.5 font-medium transition-all",
+                tab === "layout" 
+                  ? "bg-zinc-900 text-white shadow-sm" 
+                  : "text-zinc-600 hover:bg-zinc-100"
+              )}
+            >
+              Layout
+            </button>
+            <button 
+              onClick={() => onChangeTab("style")} 
+              className={clsx(
+                "flex-1 rounded-lg px-3 py-1.5 font-medium transition-all",
+                tab === "style" 
+                  ? "bg-zinc-900 text-white shadow-sm" 
+                  : "text-zinc-600 hover:bg-zinc-100"
+              )}
+            >
+              Style
+            </button>
+          </div>
         </div>
 
         {tab === "props" && renderPropsEditor()}

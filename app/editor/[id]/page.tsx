@@ -11,7 +11,7 @@ import TableRowExtended from "@/lib/TableRowExtended";
 import TableHeader from "@tiptap/extension-table-header";
 import TableInspector from "@/app/editor/_components/TableInspector";
 import TableCellExtended from "@/lib/TableCellExtended";
-import { TextStyle } from "@tiptap/extension-text-style";
+import TextStyleExtended from "@/lib/TextStyleExtended";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import Color from "@tiptap/extension-color";
@@ -23,9 +23,13 @@ import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import Section from "@/lib/SectionExtension";
 import ParagraphExtended from "@/lib/ParagraphExtended";
-import TopBar from "@/app/editor/_components/TopBar";
-import LeftSidebar from "@/app/editor/_components/LeftSidebar";
-import Inspector from "@/app/editor/_components/Inspector";
+// Enhanced Enterprise Components
+import TopBarEnhanced from "@/app/editor/_components/TopBarEnhanced";
+import LeftSidebarEnhanced from "@/app/editor/_components/LeftSidebarEnhanced";
+import InspectorEnhanced from "@/app/editor/_components/InspectorEnhanced";
+import FloatingToolbar from "@/app/editor/_components/FloatingToolbar";
+import { SavingIndicator, EmptyDocumentState } from "@/app/editor/_components/LoadingStates";
+import "@/app/editor/_styles/enterprise-editor.css";
 import Toolbar from "@/app/editor/_components/Toolbar";
 import DevicePreview, { type DeviceKind } from "@/app/editor/_components/DevicePreview";
 import CommandPalette from "@/app/editor/_components/CommandPalette";
@@ -40,6 +44,12 @@ import logger from "@/lib/logger";
 import HelpOverlay from "@/app/editor/_components/HelpOverlay";
 import { replaceCurrentTableWithMatrix } from "@/lib/tableUtils";
 import { TextSelection } from "prosemirror-state";
+import MediaManager from "@/app/editor/_components/MediaManager";
+import BlockTemplates from "@/app/editor/_components/BlockTemplates";
+import DocumentSettings from "@/app/editor/_components/DocumentSettings";
+import TemplateManager from "@/app/editor/_components/TemplateManager";
+import ComponentBuilder from "@/app/editor/_components/ComponentBuilder";
+import CustomComponentLibrary from "@/app/editor/_components/CustomComponentLibrary";
 
 // moved to lib/hooks.ts
 
@@ -80,6 +90,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [device, setDevice] = React.useState<DeviceKind>("desktop");
   const [slashOpen, setSlashOpen] = React.useState(false);
   const [helpOpen, setHelpOpen] = React.useState(false);
+  const [mediaManagerOpen, setMediaManagerOpen] = React.useState(false);
+  const [blockTemplatesOpen, setBlockTemplatesOpen] = React.useState(false);
+  const [documentSettingsOpen, setDocumentSettingsOpen] = React.useState(false);
+  const [templateManagerOpen, setTemplateManagerOpen] = React.useState(false);
+  const [componentBuilderOpen, setComponentBuilderOpen] = React.useState(false);
+  const [customComponentLibraryOpen, setCustomComponentLibraryOpen] = React.useState(false);
+  const [documentMeta, setDocumentMeta] = React.useState<any>({});
   const leftResizerRef = React.useRef<HTMLDivElement | null>(null);
   const rightResizerRef = React.useRef<HTMLDivElement | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -88,10 +105,22 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     setMounted(true);
   }, []);
 
+  // Fetch components (including custom components)
+  async function fetchComponents() {
+    try {
+      const res = await fetch("/api/components");
+      const data = await res.json();
+      if (data.ok) {
+        setComponents(data.data);
+        console.log(`[Editor] Loaded ${data.data.length} components`);
+      }
+    } catch (error) {
+      console.error("Load components error", error);
+    }
+  }
+
   React.useEffect(() => {
-    fetch("/api/components").then((r) => r.json()).then((j) => {
-      if (j.ok) setComponents(j.data);
-    }).catch((e) => console.error("Load components error", e));
+    fetchComponents();
   }, []);
 
   function startLeftResize(e: React.MouseEvent) {
@@ -147,7 +176,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       TableRowExtended,
       TableHeader,
       TableCellExtended,
-      TextStyle,
+      TextStyleExtended,
       // Override base paragraph with enterprise attrs (indent, spacing)
       ParagraphExtended,
       Section.extend({
@@ -436,6 +465,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         if (!json.ok) throw new Error(json?.error?.message ?? "Failed to load");
         setTitle(json.data.title);
         setSlug(json.data.slug);
+        setDocumentMeta(json.data.meta || {});
         projectKeyRef.current = json?.data?.project?.key ?? null;
         const draft = json?.data?.meta?.draftContent ?? { type: "doc", content: [{ type: "paragraph" }] };
         editor?.commands.setContent(draft);
@@ -522,6 +552,23 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       alert(`Publish error: ${String(e?.message ?? e)}`);
       console.error("Publish error", e);
       toast.error(String(e?.message ?? e));
+    }
+  }
+
+  async function saveDocumentSettings(settings: any) {
+    try {
+      const updatedMeta = { ...documentMeta, displaySettings: settings };
+      const res = await fetch(`/api/documents/${docId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ meta: updatedMeta }),
+      });
+      if (!res.ok) throw new Error("Failed to save settings");
+      setDocumentMeta(updatedMeta);
+      toast.success("Settings saved successfully");
+    } catch (e: any) {
+      console.error("Save settings error", e);
+      toast.error("Failed to save settings");
     }
   }
 
@@ -792,9 +839,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <TopBar
+      <TopBarEnhanced
         title={title}
         saving={saving}
+        lastSaved={new Date()}
+        collaborators={0}
         onInsertImageClick={onInsertImageClick}
         onPublish={onPublish}
         onView={() => {
@@ -812,7 +861,24 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }}
         onOpenCommandPalette={() => setCmdkOpen(true)}
         onOpenHelp={() => setHelpOpen(true)}
+        onOpenMediaManager={() => setMediaManagerOpen(true)}
+        onOpenTemplates={() => setTemplateManagerOpen(true)}
+        onOpenSettings={() => setDocumentSettingsOpen(true)}
+        onOpenDataSources={() => {}}
+        onOpenCustomComponents={() => setCustomComponentLibraryOpen(true)}
+        onShare={() => {}}
+        onExport={() => {}}
       />
+      
+      {/* Floating Toolbar for text formatting */}
+      <FloatingToolbar
+        editor={editor}
+        isVisible={false}
+        position={null}
+      />
+      
+      {/* Saving Indicator */}
+      <SavingIndicator saving={saving} />
       <CommandPalette
         open={isCmdkOpen}
         setOpen={setCmdkOpen}
@@ -824,6 +890,73 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       />
       <SlashMenu editor={editor} components={components as any} open={slashOpen} setOpen={setSlashOpen} />
       <HelpOverlay open={helpOpen} onOpenChange={setHelpOpen} />
+      <MediaManager 
+        open={mediaManagerOpen} 
+        onOpenChange={setMediaManagerOpen}
+        onInsertMedia={(url) => {
+          editor?.chain().focus().setImage({ src: url }).run();
+          toast.success("Image inserted");
+        }}
+      />
+      <BlockTemplates
+        open={blockTemplatesOpen}
+        onOpenChange={setBlockTemplatesOpen}
+        onApplyTemplate={(content) => {
+          editor?.commands.setContent(content);
+          toast.success("Template applied");
+        }}
+      />
+      <DocumentSettings
+        open={documentSettingsOpen}
+        onOpenChange={setDocumentSettingsOpen}
+        documentId={docId}
+        currentSettings={documentMeta.displaySettings}
+        onSave={saveDocumentSettings}
+      />
+      
+      {/* Template Manager */}
+      <TemplateManager
+        open={templateManagerOpen}
+        onOpenChange={setTemplateManagerOpen}
+        currentDocument={editor?.getJSON()}
+        onApplyTemplate={(template) => {
+          if (template.content) {
+            editor?.commands.setContent(template.content);
+            toast.success(`Template "${template.name}" applied!`);
+          }
+        }}
+      />
+      
+      {/* Component Builder */}
+      <ComponentBuilder
+        open={componentBuilderOpen}
+        onOpenChange={setComponentBuilderOpen}
+        onSave={async (component) => {
+          // Reload components after saving
+          await fetchComponents();
+          // Reload custom components into registry
+          const { loadCustomComponents } = await import("@/app/editor/_registry/sections");
+          await loadCustomComponents();
+          toast.success(`Component "${component.name}" saved!`);
+          setComponentBuilderOpen(false);
+        }}
+      />
+      
+      {/* Custom Component Library */}
+      <CustomComponentLibrary
+        open={customComponentLibraryOpen}
+        onOpenChange={setCustomComponentLibraryOpen}
+        onEdit={(component) => {
+          setComponentBuilderOpen(true);
+          setCustomComponentLibraryOpen(false);
+        }}
+        onRefresh={async () => {
+          await fetchComponents();
+          const { loadCustomComponents } = await import("@/app/editor/_registry/sections");
+          await loadCustomComponents();
+        }}
+      />
+      
       <input ref={fileInputRef} onChange={onFileChange} type="file" accept="image/*" style={{ display: "none" }} />
 
       {/* Toolbar */}
@@ -856,7 +989,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       </div>
 
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <LeftSidebar
+        <LeftSidebarEnhanced
           width={leftWidth}
           onMouseDownResizer={startLeftResize}
           components={components as any}
@@ -967,15 +1100,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             </div>
           </DevicePreview>
         </div>
-        <Inspector
+        <InspectorEnhanced
           width={rightWidth}
           onMouseDownResizer={startRightResize}
-          tab={inspectorTab}
-          onChangeTab={setInspectorTab as any}
-          selectedSectionKey={selectedSectionKey}
-          selectedSectionProps={selectedSectionProps}
-          components={components}
-          onUpdateAttributes={(next) => {
+          selectedNode={selectedSectionProps ? { attrs: { props: selectedSectionProps, componentKey: selectedSectionKey } } : null}
+          onUpdateProps={(next) => {
             setSelectedSectionProps(next);
             try {
               editor?.chain().focus().updateAttributes("section", { props: next }).run();
@@ -984,11 +1113,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
               console.error("[Inspector] update attributes error", e);
             }
           }}
+          onDeleteNode={deleteSection}
+          onDuplicateNode={duplicateSection}
           onResetProps={resetProps}
-          onDuplicateSection={duplicateSection}
-          onDeleteSection={deleteSection}
+          tab={inspectorTab}
+          onChangeTab={setInspectorTab as any}
           rawPropsMode={rawPropsMode}
           setRawPropsMode={setRawPropsMode}
+          components={components}
           bottomExtra={<TableInspector editor={editor} />}
         />
       </div>

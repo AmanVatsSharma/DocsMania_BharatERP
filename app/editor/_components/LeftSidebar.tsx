@@ -13,6 +13,8 @@ export interface ComponentDef {
   schema?: Record<string, any>;
   category?: string;
   thumbnailUrl?: string;
+  description?: string;
+  tags?: string[];
 }
 
 export interface LeftSidebarProps {
@@ -27,6 +29,21 @@ export interface LeftSidebarProps {
   outlineItems: Array<{ index: number; preview: string; pos: number }>;
   activeTab: "library" | "outline";
   onChangeTab: (tab: "library" | "outline") => void;
+}
+
+/**
+ * Get icon emoji for category
+ */
+function getCategoryIcon(category?: string): string {
+  const icons: Record<string, string> = {
+    Layout: "📐",
+    Content: "📝",
+    Interactive: "🎯",
+    Media: "🎬",
+    Data: "📊",
+    Special: "✨",
+  };
+  return icons[category || ""] || "🧩";
 }
 
 /**
@@ -51,8 +68,25 @@ export default function LeftSidebar(props: LeftSidebarProps) {
 
   const filtered = React.useMemo(() => {
     const q = libraryQuery.toLowerCase();
-    return components.filter((c) => c.name.toLowerCase().includes(q) || c.key.toLowerCase().includes(q));
+    return components.filter((c) => 
+      c.name.toLowerCase().includes(q) || 
+      c.key.toLowerCase().includes(q) ||
+      c.category?.toLowerCase().includes(q) ||
+      c.description?.toLowerCase().includes(q) ||
+      c.tags?.some(t => t.toLowerCase().includes(q))
+    );
   }, [components, libraryQuery]);
+
+  // Group by category
+  const categorized = React.useMemo(() => {
+    const groups: Record<string, ComponentDef[]> = {};
+    filtered.forEach((c) => {
+      const cat = c.category || "Other";
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(c);
+    });
+    return groups;
+  }, [filtered]);
 
   return (
     <div style={{ width }} className="relative bg-white dc-panel">
@@ -83,32 +117,62 @@ export default function LeftSidebar(props: LeftSidebarProps) {
         {activeTab === "library" && (
           <div className="p-3">
             <input
-              placeholder="Search components…"
+              placeholder="🔍 Search blocks & templates…"
               value={libraryQuery}
               onChange={(e) => onLibraryQueryChange(e.target.value)}
-              className="w-full rounded-md border border-[var(--border)] px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
+              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm transition-shadow focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/5"
             />
             <ScrollArea.Root className="mt-3 h-[calc(100vh-180px)] overflow-hidden">
               <ScrollArea.Viewport className="h-full w-full">
-                <div className="grid grid-cols-1 gap-2">
-                  {filtered.map((c) => (
-                    <button
-                      key={c.key}
-                      draggable
-                      onDragStart={(e) => onDragStartComponent(e, c)}
-                      className="group flex items-center gap-3 rounded-md border border-[var(--border)] p-2 text-left text-sm hover:bg-zinc-50 active:scale-[0.99]"
-                    >
-                      <div className="h-8 w-12 shrink-0 overflow-hidden rounded bg-zinc-100" aria-hidden>
-                        {c.thumbnailUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={c.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-                        ) : null}
+                <div className="space-y-4">
+                  {Object.entries(categorized).map(([category, items]) => (
+                    <div key={category}>
+                      <div className="mb-2 flex items-center gap-2">
+                        <div className="h-px flex-1 bg-zinc-200" />
+                        <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{category}</span>
+                        <div className="h-px flex-1 bg-zinc-200" />
                       </div>
-                      <div className="min-w-0">
-                        <div className="truncate font-medium text-zinc-900">{c.name}</div>
-                        <div className="truncate text-xs text-zinc-500">{c.key}</div>
+                      <div className="grid grid-cols-1 gap-2">
+                        {items.map((c) => (
+                          <button
+                            key={c.key}
+                            draggable
+                            onDragStart={(e) => onDragStartComponent(e, c)}
+                            className="group relative flex items-start gap-3 rounded-lg border border-zinc-200 bg-white p-3 text-left text-sm shadow-sm transition-all hover:border-zinc-300 hover:shadow-md active:scale-[0.98]"
+                            title={c.description}
+                          >
+                            <div className="h-10 w-14 shrink-0 overflow-hidden rounded-md bg-gradient-to-br from-zinc-100 to-zinc-200" aria-hidden>
+                              {c.thumbnailUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={c.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                              ) : (
+                                <div className="flex h-full items-center justify-center text-xl">
+                                  {getCategoryIcon(c.category)}
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate font-semibold text-zinc-900">{c.name}</div>
+                              {c.description && (
+                                <div className="truncate text-xs text-zinc-500">{c.description}</div>
+                              )}
+                              {c.tags && c.tags.length > 0 && (
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                  {c.tags.slice(0, 2).map((tag) => (
+                                    <span key={tag} className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-600">
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
+                              <div className="rounded bg-zinc-900 px-1.5 py-0.5 text-[10px] text-white">Drag</div>
+                            </div>
+                          </button>
+                        ))}
                       </div>
-                    </button>
+                    </div>
                   ))}
                 </div>
               </ScrollArea.Viewport>
