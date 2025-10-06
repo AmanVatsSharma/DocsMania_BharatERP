@@ -1053,8 +1053,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           }}
           onDeleteNode={deleteSection}
           onDuplicateNode={duplicateSection}
+          onResetProps={resetProps}
           tab={inspectorTab}
           onChangeTab={setInspectorTab as any}
+          rawPropsMode={rawPropsMode}
+          setRawPropsMode={setRawPropsMode}
+          components={components}
+          bottomExtra={<TableInspector editor={editor} />}
         />
       </div>
     </div>

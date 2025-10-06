@@ -5,7 +5,7 @@ import * as Tabs from "@radix-ui/react-tabs";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import {
   Settings, Layout, Palette, ChevronDown, Info, Copy, Trash2,
-  Eye, EyeOff, Lock, Unlock, MoreVertical
+  Eye, EyeOff, Lock, Unlock, MoreVertical, RefreshCw, Code
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { clsx } from "clsx";
@@ -17,8 +17,13 @@ export interface InspectorEnhancedProps {
   onUpdateProps: (props: any) => void;
   onDeleteNode?: () => void;
   onDuplicateNode?: () => void;
+  onResetProps?: () => void;
   tab: "props" | "layout" | "style";
   onChangeTab: (tab: "props" | "layout" | "style") => void;
+  rawPropsMode?: boolean;
+  setRawPropsMode?: (v: boolean) => void;
+  bottomExtra?: React.ReactNode;
+  components?: Array<{ key: string; name: string; schema?: Record<string, any>; defaultConfig?: any }>;
 }
 
 export default function InspectorEnhanced(props: InspectorEnhancedProps) {
@@ -29,8 +34,13 @@ export default function InspectorEnhanced(props: InspectorEnhancedProps) {
     onUpdateProps,
     onDeleteNode,
     onDuplicateNode,
+    onResetProps,
     tab,
     onChangeTab,
+    rawPropsMode,
+    setRawPropsMode,
+    bottomExtra,
+    components,
   } = props;
 
   const nodeProps = selectedNode?.attrs?.props || {};
@@ -75,6 +85,24 @@ export default function InspectorEnhanced(props: InspectorEnhancedProps) {
                       <Copy className="h-4 w-4" />
                       Duplicate
                     </DropdownMenu.Item>
+                    {onResetProps && (
+                      <DropdownMenu.Item
+                        onClick={onResetProps}
+                        className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-zinc-700 outline-none hover:bg-zinc-100"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                        Reset Props
+                      </DropdownMenu.Item>
+                    )}
+                    {setRawPropsMode && (
+                      <DropdownMenu.Item
+                        onClick={() => setRawPropsMode(!rawPropsMode)}
+                        className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-zinc-700 outline-none hover:bg-zinc-100"
+                      >
+                        <Code className="h-4 w-4" />
+                        {rawPropsMode ? "Visual Mode" : "Raw JSON"}
+                      </DropdownMenu.Item>
+                    )}
                     <DropdownMenu.Separator className="my-1 h-px bg-zinc-200" />
                     <DropdownMenu.Item
                       onClick={onDeleteNode}
@@ -136,10 +164,16 @@ export default function InspectorEnhanced(props: InspectorEnhancedProps) {
             <ScrollArea.Viewport className="h-full w-full">
               <div className="p-4">
                 {tab === "props" && (
-                  <PropsPanel
-                    props={nodeProps}
-                    onUpdate={onUpdateProps}
-                  />
+                  rawPropsMode ? (
+                    <RawPropsEditor props={nodeProps} onUpdate={onUpdateProps} />
+                  ) : (
+                    <PropsPanel
+                      props={nodeProps}
+                      onUpdate={onUpdateProps}
+                      componentKey={componentKey}
+                      components={components}
+                    />
+                  )
                 )}
                 {tab === "layout" && (
                   <LayoutPanel
@@ -152,6 +186,13 @@ export default function InspectorEnhanced(props: InspectorEnhancedProps) {
                     props={nodeProps}
                     onUpdate={onUpdateProps}
                   />
+                )}
+                
+                {/* Extra content like TableInspector */}
+                {bottomExtra && (
+                  <div className="mt-4 border-t border-zinc-200 pt-4">
+                    {bottomExtra}
+                  </div>
                 )}
               </div>
             </ScrollArea.Viewport>
@@ -178,7 +219,21 @@ export default function InspectorEnhanced(props: InspectorEnhancedProps) {
   );
 }
 
-function PropsPanel({ props, onUpdate }: { props: any; onUpdate: (props: any) => void }) {
+function PropsPanel({ 
+  props, 
+  onUpdate, 
+  componentKey, 
+  components 
+}: { 
+  props: any; 
+  onUpdate: (props: any) => void;
+  componentKey?: string;
+  components?: Array<{ key: string; schema?: Record<string, any> }>;
+}) {
+  // Get schema from component definition
+  const def = components?.find((c) => c.key === componentKey);
+  const schema = def?.schema || {};
+  
   return (
     <div className="space-y-4">
       <InfoCard
@@ -187,23 +242,167 @@ function PropsPanel({ props, onUpdate }: { props: any; onUpdate: (props: any) =>
         description="Customize this component's content and behavior"
       />
 
-      {Object.keys(props).length === 0 ? (
+      {Object.keys(schema).length === 0 && Object.keys(props).length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-6 text-center">
           <Settings className="mx-auto h-8 w-8 text-zinc-400" />
           <p className="mt-2 text-sm text-zinc-500">No properties available</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {Object.entries(props).map(([key, value]) => (
-            <PropertyField
-              key={key}
-              label={formatLabel(key)}
-              value={value}
-              onChange={(newValue) => onUpdate({ ...props, [key]: newValue })}
-            />
-          ))}
+          {/* Render fields based on schema if available */}
+          {Object.keys(schema).length > 0 ? (
+            Object.entries(schema).map(([key, fieldDef]: [string, any]) => (
+              <SchemaBasedField
+                key={key}
+                name={key}
+                fieldDef={fieldDef}
+                value={props[key]}
+                onChange={(newValue) => onUpdate({ ...props, [key]: newValue })}
+              />
+            ))
+          ) : (
+            /* Fallback to simple property list */
+            Object.entries(props).map(([key, value]) => (
+              <PropertyField
+                key={key}
+                label={formatLabel(key)}
+                value={value}
+                onChange={(newValue) => onUpdate({ ...props, [key]: newValue })}
+              />
+            ))
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function RawPropsEditor({ props, onUpdate }: { props: any; onUpdate: (props: any) => void }) {
+  const [jsonText, setJsonText] = React.useState(JSON.stringify(props, null, 2));
+  const [error, setError] = React.useState<string | null>(null);
+
+  return (
+    <div className="space-y-3">
+      <InfoCard
+        icon={<Code className="h-4 w-4" />}
+        title="Raw JSON Editor"
+        description="Edit component props as JSON"
+      />
+      
+      {error && (
+        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800">
+          {error}
+        </div>
+      )}
+      
+      <textarea
+        value={jsonText}
+        onChange={(e) => {
+          setJsonText(e.target.value);
+          try {
+            const parsed = JSON.parse(e.target.value);
+            onUpdate(parsed);
+            setError(null);
+          } catch (err: any) {
+            setError(err.message);
+          }
+        }}
+        className="h-96 w-full rounded-lg border border-zinc-300 bg-zinc-900 p-4 font-mono text-sm text-white focus:border-purple-400 focus:outline-none"
+        spellCheck={false}
+      />
+    </div>
+  );
+}
+
+function SchemaBasedField({
+  name,
+  fieldDef,
+  value,
+  onChange,
+}: {
+  name: string;
+  fieldDef: any;
+  value: any;
+  onChange: (value: any) => void;
+}) {
+  const type = fieldDef.type || "string";
+  const label = fieldDef.label || formatLabel(name);
+  const options = fieldDef.options || [];
+
+  if (type === "select") {
+    return (
+      <SelectField
+        label={label}
+        value={value || fieldDef.default || ""}
+        options={options.map((opt: any) => ({
+          value: typeof opt === "string" ? opt : opt.value,
+          label: typeof opt === "string" ? opt : opt.label
+        }))}
+        onChange={onChange}
+      />
+    );
+  }
+
+  if (type === "color") {
+    return (
+      <ColorField
+        label={label}
+        value={value || fieldDef.default || "#000000"}
+        onChange={onChange}
+      />
+    );
+  }
+
+  if (type === "number") {
+    return (
+      <div className="rounded-lg border border-zinc-200 bg-white p-3">
+        <label className="mb-2 block text-xs font-semibold text-zinc-700">
+          {label}
+        </label>
+        <input
+          type="number"
+          value={value ?? fieldDef.default ?? 0}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-100"
+        />
+      </div>
+    );
+  }
+
+  if (type === "boolean") {
+    return (
+      <div className="rounded-lg border border-zinc-200 bg-white p-3">
+        <label className="mb-2 block text-xs font-semibold text-zinc-700">
+          {label}
+        </label>
+        <button
+          onClick={() => onChange(!value)}
+          className={clsx(
+            "flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+            value
+              ? "bg-purple-100 text-purple-700"
+              : "bg-zinc-100 text-zinc-600"
+          )}
+        >
+          <span>{value ? "Enabled" : "Disabled"}</span>
+          {value ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+        </button>
+      </div>
+    );
+  }
+
+  // Default: string
+  return (
+    <div className="rounded-lg border border-zinc-200 bg-white p-3">
+      <label className="mb-2 block text-xs font-semibold text-zinc-700">
+        {label}
+      </label>
+      <input
+        type="text"
+        value={value ?? fieldDef.default ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-100"
+      />
     </div>
   );
 }
