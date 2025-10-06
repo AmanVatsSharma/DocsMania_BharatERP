@@ -42,6 +42,7 @@ import { replaceCurrentTableWithMatrix } from "@/lib/tableUtils";
 import { TextSelection } from "prosemirror-state";
 import MediaManager from "@/app/editor/_components/MediaManager";
 import BlockTemplates from "@/app/editor/_components/BlockTemplates";
+import DocumentSettings from "@/app/editor/_components/DocumentSettings";
 
 // moved to lib/hooks.ts
 
@@ -84,6 +85,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [helpOpen, setHelpOpen] = React.useState(false);
   const [mediaManagerOpen, setMediaManagerOpen] = React.useState(false);
   const [blockTemplatesOpen, setBlockTemplatesOpen] = React.useState(false);
+  const [documentSettingsOpen, setDocumentSettingsOpen] = React.useState(false);
+  const [documentMeta, setDocumentMeta] = React.useState<any>({});
   const leftResizerRef = React.useRef<HTMLDivElement | null>(null);
   const rightResizerRef = React.useRef<HTMLDivElement | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -440,6 +443,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         if (!json.ok) throw new Error(json?.error?.message ?? "Failed to load");
         setTitle(json.data.title);
         setSlug(json.data.slug);
+        setDocumentMeta(json.data.meta || {});
         projectKeyRef.current = json?.data?.project?.key ?? null;
         const draft = json?.data?.meta?.draftContent ?? { type: "doc", content: [{ type: "paragraph" }] };
         editor?.commands.setContent(draft);
@@ -526,6 +530,23 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       alert(`Publish error: ${String(e?.message ?? e)}`);
       console.error("Publish error", e);
       toast.error(String(e?.message ?? e));
+    }
+  }
+
+  async function saveDocumentSettings(settings: any) {
+    try {
+      const updatedMeta = { ...documentMeta, displaySettings: settings };
+      const res = await fetch(`/api/documents/${docId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ meta: updatedMeta }),
+      });
+      if (!res.ok) throw new Error("Failed to save settings");
+      setDocumentMeta(updatedMeta);
+      toast.success("Settings saved successfully");
+    } catch (e: any) {
+      console.error("Save settings error", e);
+      toast.error("Failed to save settings");
     }
   }
 
@@ -818,6 +839,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         onOpenHelp={() => setHelpOpen(true)}
         onOpenMediaManager={() => setMediaManagerOpen(true)}
         onOpenTemplates={() => setBlockTemplatesOpen(true)}
+        onOpenSettings={() => setDocumentSettingsOpen(true)}
       />
       <CommandPalette
         open={isCmdkOpen}
@@ -845,6 +867,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           editor?.commands.setContent(content);
           toast.success("Template applied");
         }}
+      />
+      <DocumentSettings
+        open={documentSettingsOpen}
+        onOpenChange={setDocumentSettingsOpen}
+        documentId={docId}
+        currentSettings={documentMeta.displaySettings}
+        onSave={saveDocumentSettings}
       />
       <input ref={fileInputRef} onChange={onFileChange} type="file" accept="image/*" style={{ display: "none" }} />
 

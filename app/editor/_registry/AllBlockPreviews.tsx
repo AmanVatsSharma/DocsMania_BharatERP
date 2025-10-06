@@ -9,26 +9,44 @@ import { PreviewProps } from "./sections";
 // LAYOUT BLOCKS
 
 export function HeroPreview({ props }: PreviewProps) {
-  const { title = "Hero Title", subtitle = "", ctaText = "Get Started", ctaLink = "#", alignment = "center", style = {} } = props || {};
+  const { 
+    title = "Hero Title", 
+    subtitle = "", 
+    ctaText = "Get Started", 
+    ctaLink = "#", 
+    alignment = "center", 
+    style = {} 
+  } = props || {};
+  
+  // Ensure all style props are applied
+  const containerStyle: React.CSSProperties = {
+    backgroundColor: style.backgroundColor || "#f8fafc",
+    color: style.color || "#0f172a",
+    borderRadius: style.borderRadius ? `${style.borderRadius}px` : "12px",
+    textAlign: alignment as any,
+    padding: "48px",
+    boxShadow: style.shadow === "sm" ? "0 1px 2px rgba(0,0,0,0.05)" :
+               style.shadow === "md" ? "0 4px 6px rgba(0,0,0,0.07)" :
+               style.shadow === "lg" ? "0 10px 15px rgba(0,0,0,0.1)" : "none",
+    border: style.borderWidth ? `${style.borderWidth}px solid ${style.borderColor || "#e5e7eb"}` : undefined,
+  };
+
   return (
-    <div 
-      className="rounded-lg p-12 text-center" 
-      style={{ 
-        backgroundColor: style.backgroundColor || "#f8fafc",
-        color: style.color || "#0f172a",
-        borderRadius: style.borderRadius ? `${style.borderRadius}px` : "12px",
-        textAlign: alignment as any,
-        boxShadow: style.shadow === "sm" ? "0 1px 2px rgba(0,0,0,0.05)" :
-                   style.shadow === "md" ? "0 4px 6px rgba(0,0,0,0.07)" :
-                   style.shadow === "lg" ? "0 10px 15px rgba(0,0,0,0.1)" : "none"
-      }}
-    >
-      <h1 className="mb-4 text-4xl font-bold">{title}</h1>
-      {subtitle && <p className="mb-6 text-xl opacity-80">{subtitle}</p>}
+    <div style={containerStyle}>
+      <h1 style={{ marginBottom: "16px", fontSize: "36px", fontWeight: "bold" }}>{title}</h1>
+      {subtitle && <p style={{ marginBottom: "24px", fontSize: "20px", opacity: 0.8 }}>{subtitle}</p>}
       {ctaText && (
         <a 
           href={ctaLink} 
-          className="inline-block rounded-lg bg-zinc-900 px-6 py-3 font-semibold text-white hover:bg-zinc-800"
+          style={{
+            display: "inline-block",
+            borderRadius: "8px",
+            backgroundColor: style.accentColor || "#18181b",
+            padding: "12px 24px",
+            fontWeight: 600,
+            color: "#ffffff",
+            textDecoration: "none"
+          }}
         >
           {ctaText}
         </a>
@@ -85,18 +103,20 @@ export function CalloutPreview({ props }: PreviewProps) {
     error: { bg: "#fee2e2", color: "#991b1b", border: "#ef4444" }
   };
   const colors = typeColors[type as keyof typeof typeColors] || typeColors.info;
+  
+  const containerStyle: React.CSSProperties = {
+    backgroundColor: style.backgroundColor || colors.bg,
+    color: style.color || colors.color,
+    borderLeft: `4px solid ${style.borderColor || colors.border}`,
+    borderRadius: "8px",
+    padding: "16px",
+  };
+
   return (
-    <div 
-      className="rounded-lg p-4"
-      style={{
-        backgroundColor: style.backgroundColor || colors.bg,
-        color: style.color || colors.color,
-        borderLeft: `4px solid ${style.borderColor || colors.border}`
-      }}
-    >
-      <div className="flex items-start gap-3">
-        {icon && <span className="text-xl">{icon}</span>}
-        <div className="flex-1">{text}</div>
+    <div style={containerStyle}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+        {icon && <span style={{ fontSize: "20px" }}>{icon}</span>}
+        <div style={{ flex: 1 }}>{text}</div>
       </div>
     </div>
   );
