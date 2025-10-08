@@ -6,8 +6,8 @@
 
 "use client";
 
-import React, { useState } from "react";
-import { BubbleMenu, Editor } from "@tiptap/react";
+import React, { useState, useEffect, useRef } from "react";
+import { Editor } from "@tiptap/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bold,
@@ -66,47 +66,72 @@ const HIGHLIGHT_COLORS = [
 
 export default function BubbleMenuEnhanced({ editor, onToggleLink }: BubbleMenuEnhancedProps) {
   const [showMore, setShowMore] = useState(false);
+  const [show, setShow] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  if (!editor) return null;
+  useEffect(() => {
+    if (!editor) return;
 
-  const shouldShow = ({ editor, view, state, oldState, from, to }: any) => {
-    // Don't show if no text selected
-    if (from === to) return false;
+    const updateMenu = () => {
+      const { state } = editor;
+      const { selection } = state;
+      const { from, to, empty } = selection;
 
-    // Don't show for node selections
-    const { doc, selection } = state;
-    const { empty } = selection;
+      // Don't show if no text selected
+      if (empty || from === to) {
+        setShow(false);
+        return;
+      }
 
-    // Show only for text selections
-    const isTextSelection =
-      !empty && state.selection.$from.parent.inlineContent;
+      // Check if selection is in inline content
+      const isTextSelection = state.selection.$from.parent.inlineContent;
+      if (!isTextSelection) {
+        setShow(false);
+        return;
+      }
 
-    return isTextSelection;
-  };
+      // Calculate position
+      const { view } = editor;
+      const start = view.coordsAtPos(from);
+      const end = view.coordsAtPos(to);
+
+      const top = start.top - 50; // Position above selection
+      const left = (start.left + end.left) / 2 - 200; // Center horizontally
+
+      setPosition({ top, left });
+      setShow(true);
+      setShowMore(false);
+    };
+
+    // Listen to selection changes
+    editor.on('selectionUpdate', updateMenu);
+    editor.on('transaction', updateMenu);
+
+    return () => {
+      editor.off('selectionUpdate', updateMenu);
+      editor.off('transaction', updateMenu);
+    };
+  }, [editor]);
+
+  if (!editor || !show) return null;
 
   return (
-    <BubbleMenu
-      editor={editor}
-      shouldShow={shouldShow}
-      tippyOptions={{
-        duration: 150,
-        placement: "top",
-        maxWidth: "none",
-        animation: "shift-away",
-        onShow(instance) {
-          // Reset more menu when showing
-          setShowMore(false);
-        },
+    <motion.div
+      ref={menuRef}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      variants={scaleVariants.in}
+      transition={transitions.fast}
+      style={{
+        position: 'fixed',
+        top: position.top,
+        left: position.left,
+        zIndex: 50,
       }}
+      className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
     >
-      <motion.div
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        variants={scaleVariants.in}
-        transition={transitions.fast}
-        className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
-      >
         {/* Text Formatting */}
         <div className="flex items-center gap-0.5">
           <button
@@ -393,7 +418,6 @@ export default function BubbleMenuEnhanced({ editor, onToggleLink }: BubbleMenuE
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
-    </BubbleMenu>
+    </motion.div>
   );
 }

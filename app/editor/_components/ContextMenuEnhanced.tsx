@@ -13,7 +13,7 @@ import {
   Underline,
   Strikethrough,
   Copy,
-  Cut,
+  Scissors,
   Clipboard,
   Trash2,
   Link as LinkIcon,
@@ -193,7 +193,7 @@ export default function ContextMenuEnhanced(props: ContextMenuEnhancedProps) {
             className="group flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-zinc-100 dark:data-[highlighted]:bg-zinc-800"
             onSelect={() => document.execCommand("cut")}
           >
-            <Cut className="h-4 w-4" />
+            <Scissors className="h-4 w-4" />
             <span className="flex-1">Cut</span>
             <span className="text-xs text-zinc-500">⌘X</span>
           </ContextMenu.Item>
