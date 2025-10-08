@@ -1,3 +1,12 @@
+/**
+ * ⚠️ DEPRECATED - DO NOT USE
+ * This file has been replaced by RightInspectorSliding.tsx
+ * Safe to delete after verifying new UI works
+ * 
+ * Replacement: /app/editor/_components/RightInspectorSliding.tsx
+ * Migration Date: Current
+ */
+
 "use client";
 
 import React from "react";

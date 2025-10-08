@@ -1,3 +1,15 @@
+/**
+ * ⚠️ POTENTIALLY DEPRECATED
+ * Most functionality moved to BubbleMenuEnhanced.tsx and TopBarAutoHide.tsx
+ * Review usage before deleting
+ * 
+ * New components handle:
+ * - Text formatting: BubbleMenuEnhanced
+ * - Insert actions: TopBarAutoHide + SlashCommandsEnhanced
+ * 
+ * May keep for backward compatibility
+ */
+
 "use client";
 
 import React from "react";
