@@ -4,7 +4,6 @@
  */
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 export type ViewMode = 'normal' | 'focus' | 'zen' | 'reading';
 export type ThemeMode = 'light' | 'dark' | 'system';
@@ -92,25 +91,23 @@ const defaultState = {
   selectedComponent: null,
 };
 
-export const useEditorUI = create<EditorUIState>()(
-  persist(
-    (set, get) => ({
-      ...defaultState,
+export const useEditorUI = create<EditorUIState>()((set, get) => ({
+  ...defaultState,
       
       // Panel Controls
-      setLeftSidebarOpen: (open) => set({ leftSidebarOpen: open }),
+      setLeftSidebarOpen: (open: boolean) => set({ leftSidebarOpen: open }),
       toggleLeftSidebar: () => set((state) => ({ leftSidebarOpen: !state.leftSidebarOpen })),
-      setLeftSidebarCollapsed: (collapsed) => set({ leftSidebarCollapsed: collapsed }),
+      setLeftSidebarCollapsed: (collapsed: boolean) => set({ leftSidebarCollapsed: collapsed }),
       
-      setRightInspectorOpen: (open) => set({ rightInspectorOpen: open }),
+      setRightInspectorOpen: (open: boolean) => set({ rightInspectorOpen: open }),
       toggleRightInspector: () => set((state) => ({ rightInspectorOpen: !state.rightInspectorOpen })),
       
-      setTopBarVisible: (visible) => set({ topBarVisible: visible }),
-      setTopBarPinned: (pinned) => set({ topBarPinned: pinned }),
+      setTopBarVisible: (visible: boolean) => set({ topBarVisible: visible }),
+      setTopBarPinned: (pinned: boolean) => set({ topBarPinned: pinned }),
       
       // View Modes
-      setViewMode: (mode) => set({ viewMode: mode }),
-      setThemeMode: (mode) => {
+      setViewMode: (mode: ViewMode) => set({ viewMode: mode }),
+      setThemeMode: (mode: ThemeMode) => {
         set({ themeMode: mode });
         // Apply theme to document
         if (typeof document !== 'undefined') {
@@ -128,19 +125,19 @@ export const useEditorUI = create<EditorUIState>()(
       },
       
       // Canvas Settings
-      setCanvasWidth: (width) => set({ canvasWidth: Math.max(400, Math.min(1200, width)) }),
-      setCanvasPadding: (padding) => set({ canvasPadding: Math.max(0, Math.min(100, padding)) }),
+      setCanvasWidth: (width: number) => set({ canvasWidth: Math.max(400, Math.min(1200, width)) }),
+      setCanvasPadding: (padding: number) => set({ canvasPadding: Math.max(0, Math.min(100, padding)) }),
       toggleLineNumbers: () => set((state) => ({ showLineNumbers: !state.showLineNumbers })),
       
       // UI Preferences
-      setAnimationsEnabled: (enabled) => set({ animationsEnabled: enabled }),
-      setAutoHideTopBar: (enabled) => set({ autoHideTopBar: enabled }),
-      setAutoShowInspector: (enabled) => set({ autoShowInspector: enabled }),
+      setAnimationsEnabled: (enabled: boolean) => set({ animationsEnabled: enabled }),
+      setAutoHideTopBar: (enabled: boolean) => set({ autoHideTopBar: enabled }),
+      setAutoShowInspector: (enabled: boolean) => set({ autoShowInspector: enabled }),
       
       // Temporary States
-      setScrollingDown: (scrolling) => set({ isScrollingDown: scrolling }),
-      setHoveredComponent: (id) => set({ hoveredComponent: id }),
-      setSelectedComponent: (id) => {
+      setScrollingDown: (scrolling: boolean) => set({ isScrollingDown: scrolling }),
+      setHoveredComponent: (id: string | null) => set({ hoveredComponent: id }),
+      setSelectedComponent: (id: string | null) => {
         set({ selectedComponent: id });
         // Auto-show inspector if enabled and something is selected
         if (id && get().autoShowInspector) {
@@ -171,24 +168,7 @@ export const useEditorUI = create<EditorUIState>()(
         leftSidebarOpen: true,
         topBarVisible: true,
       }),
-    }),
-    {
-      name: 'docsmania-editor-ui',
-      partialize: (state) => ({
-        // Only persist these fields
-        leftSidebarCollapsed: state.leftSidebarCollapsed,
-        themeMode: state.themeMode,
-        canvasWidth: state.canvasWidth,
-        canvasPadding: state.canvasPadding,
-        showLineNumbers: state.showLineNumbers,
-        animationsEnabled: state.animationsEnabled,
-        autoHideTopBar: state.autoHideTopBar,
-        autoShowInspector: state.autoShowInspector,
-        topBarPinned: state.topBarPinned,
-      }),
-    }
-  )
-);
+}));
 
 // Selector hooks for better performance
 export const useLeftSidebarOpen = () => useEditorUI((state) => state.leftSidebarOpen);
