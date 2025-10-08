@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
+import ImageExtended from "@/lib/ImageExtended";
 import TableExtended from "@/lib/TableExtended";
 import TableRowExtended from "@/lib/TableRowExtended";
 import TableHeader from "@tiptap/extension-table-header";
 import TableInspector from "@/app/editor/_components/TableInspector";
+import ImageInspector from "@/app/editor/_components/ImageInspector";
 import TableCellExtended from "@/lib/TableCellExtended";
 import TextStyleExtended from "@/lib/TextStyleExtended";
 import Underline from "@tiptap/extension-underline";
@@ -161,7 +162,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     extensions: [
       StarterKit,
       Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
-      Image,
+      ImageExtended,
       // Typography & formatting extensions
       Underline,
       Color,
@@ -585,13 +586,15 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }
     const form = new FormData();
     form.append("file", file);
+    form.append("documentId", docId);
     try {
       const res = await fetch("/api/upload", { method: "POST", body: form });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json?.error?.message ?? "Upload failed");
       const url: string = json.data.url;
-      editor?.chain().focus().setImage({ src: url }).run();
-      console.info("Inserted image", url);
+      const s3Key: string = json.data.key;
+      editor?.chain().focus().setImage({ src: url, s3Key }).run();
+      console.info("Inserted image", url, s3Key);
       toast.success("Image uploaded");
     } catch (err: any) {
       console.error("Image upload failed", err);
@@ -1121,7 +1124,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           rawPropsMode={rawPropsMode}
           setRawPropsMode={setRawPropsMode}
           components={components}
-          bottomExtra={<TableInspector editor={editor} />}
+          bottomExtra={
+            <>
+              <TableInspector editor={editor} />
+              <ImageInspector editor={editor} />
+            </>
+          }
         />
       </div>
     </div>
