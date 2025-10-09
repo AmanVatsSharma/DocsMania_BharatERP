@@ -59,14 +59,20 @@ export default function TopBarAutoHide(props: TopBarAutoHideProps) {
     title = "Untitled Document",
     saving = false,
     lastSaved,
+    collaborators = 0,
     onSave,
     onPublish,
     onView,
     onShare,
+    onExport,
     onInsertImage,
     onOpenCommandPalette,
     onOpenHelp,
     onOpenSettings,
+    onOpenMediaManager,
+    onOpenTemplates,
+    onOpenDataSources,
+    onOpenCustomComponents,
     breadcrumbs = [],
   } = props;
 
@@ -172,6 +178,18 @@ export default function TopBarAutoHide(props: TopBarAutoHideProps) {
 
   const shouldShow = topBarVisible || topBarPinned || isHoveringTop;
 
+  // Format time ago
+  const getTimeAgo = (date: Date) => {
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (seconds < 10) return "just now";
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return "yesterday";
+  };
+
   return (
     <>
       {/* Hover detection zone at top */}
@@ -235,38 +253,116 @@ export default function TopBarAutoHide(props: TopBarAutoHideProps) {
                   )}
                 </div>
 
-                {/* Save indicator */}
+                {/* Save indicator with time ago */}
                 {!isCompact && (
                   <div className="flex items-center gap-2 text-xs text-zinc-500">
                     {saving ? (
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1.5">
                         <span className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
-                        Saving...
+                        <span className="font-medium text-blue-600">Saving...</span>
                       </span>
                     ) : lastSaved ? (
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-green-500" />
-                        Saved
+                        <span className="font-medium text-green-600">Saved {getTimeAgo(lastSaved)}</span>
                       </span>
                     ) : null}
+                    {collaborators > 0 && (
+                      <span className="ml-2 flex items-center gap-1 text-zinc-500">
+                        👥 {collaborators}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
 
               {/* Right Section */}
               <div className="flex items-center gap-2">
-                {/* Compact mode: show fewer buttons */}
+                {/* Tools Dropdown - Modern Style */}
+                {!isCompact && (
+                  <DropdownMenu.Root>
+                    <DropdownMenu.Trigger asChild>
+                      <button className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-700 transition-all hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm dark:border-zinc-800 dark:text-zinc-300 dark:hover:border-zinc-700 dark:hover:bg-zinc-800">
+                        <Sparkles className="h-4 w-4" />
+                        <span className="hidden sm:inline">Tools</span>
+                        <ChevronRight className="h-3.5 w-3.5 rotate-90" />
+                      </button>
+                    </DropdownMenu.Trigger>
+                    <DropdownMenu.Portal>
+                      <DropdownMenu.Content className="z-50 min-w-[240px] rounded-xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+                        <DropdownMenu.Item
+                          onClick={onInsertImage}
+                          className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm outline-none hover:bg-purple-50 hover:text-purple-900 dark:hover:bg-purple-950"
+                        >
+                          <ImageIcon className="h-4 w-4" />
+                          <div>
+                            <div className="font-medium">Insert Image</div>
+                            <div className="text-xs text-zinc-500">Upload or link image</div>
+                          </div>
+                        </DropdownMenu.Item>
+
+                        <DropdownMenu.Item
+                          onClick={onOpenMediaManager}
+                          className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm outline-none hover:bg-purple-50 hover:text-purple-900 dark:hover:bg-purple-950"
+                        >
+                          <FileText className="h-4 w-4" />
+                          <div>
+                            <div className="font-medium">Media Library</div>
+                            <div className="text-xs text-zinc-500">Manage media assets</div>
+                          </div>
+                        </DropdownMenu.Item>
+
+                        <DropdownMenu.Item
+                          onClick={onOpenTemplates}
+                          className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm outline-none hover:bg-purple-50 hover:text-purple-900 dark:hover:bg-purple-950"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          <div>
+                            <div className="font-medium">Templates</div>
+                            <div className="text-xs text-zinc-500">Start from template</div>
+                          </div>
+                        </DropdownMenu.Item>
+
+                        <DropdownMenu.Separator className="my-1 h-px bg-zinc-200 dark:bg-zinc-800" />
+
+                        <DropdownMenu.Item
+                          onClick={onOpenDataSources}
+                          className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm outline-none hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-950"
+                        >
+                          <Database className="h-4 w-4" />
+                          <div>
+                            <div className="font-medium">Data Sources</div>
+                            <div className="text-xs text-zinc-500">Connect databases</div>
+                          </div>
+                        </DropdownMenu.Item>
+
+                        <DropdownMenu.Item
+                          onClick={onOpenCustomComponents}
+                          className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm outline-none hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-950"
+                        >
+                          <Code className="h-4 w-4" />
+                          <div>
+                            <div className="font-medium">Custom Components</div>
+                            <div className="text-xs text-zinc-500">Build React components</div>
+                          </div>
+                        </DropdownMenu.Item>
+
+                        <DropdownMenu.Separator className="my-1 h-px bg-zinc-200 dark:bg-zinc-800" />
+
+                        <DropdownMenu.Item
+                          onClick={onOpenSettings}
+                          className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm outline-none hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        >
+                          <Settings className="h-4 w-4" />
+                          <div className="font-medium">Settings</div>
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Portal>
+                  </DropdownMenu.Root>
+                )}
+
                 {!isCompact && (
                   <>
-                    <button
-                      onClick={onInsertImage}
-                      className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                      title="Insert Image"
-                    >
-                      <ImageIcon className="h-4 w-4" />
-                      <span className="hidden sm:inline">Image</span>
-                    </button>
-
                     <button
                       onClick={onOpenCommandPalette}
                       className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -308,19 +404,27 @@ export default function TopBarAutoHide(props: TopBarAutoHideProps) {
                     </button>
 
                     <button
+                      onClick={onShare}
+                      className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                      title="Share"
+                    >
+                      <Upload className="h-4 w-4" />
+                    </button>
+
+                    <button
+                      onClick={onExport}
+                      className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                      title="Export"
+                    >
+                      <Download className="h-4 w-4" />
+                    </button>
+
+                    <button
                       onClick={onOpenHelp}
                       className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
                       title="Help (?)"
                     >
                       <HelpCircle className="h-4 w-4" />
-                    </button>
-
-                    <button
-                      onClick={onOpenSettings}
-                      className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                      title="Settings"
-                    >
-                      <Settings className="h-4 w-4" />
                     </button>
                   </>
                 )}

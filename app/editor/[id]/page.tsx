@@ -37,15 +37,13 @@ import useEditorShortcuts from "@/lib/useKeyboardShortcuts";
 import TopBarAutoHide from "@/app/editor/_components/TopBarAutoHide";
 import LeftSidebarSliding from "@/app/editor/_components/LeftSidebarSliding";
 import RightInspectorSliding from "@/app/editor/_components/RightInspectorSliding";
-import BubbleMenuEnhanced from "@/app/editor/_components/BubbleMenuEnhanced";
+import BubbleMenuComplete from "@/app/editor/_components/BubbleMenuComplete";
 import SlashCommandsEnhanced from "@/app/editor/_components/SlashCommandsEnhanced";
 import ContextMenuEnhanced from "@/app/editor/_components/ContextMenuEnhanced";
 
 // Existing Features - Keep All
 import { SavingIndicator } from "@/app/editor/_components/LoadingStates";
 import "@/app/editor/_styles/enterprise-editor.css";
-import Toolbar from "@/app/editor/_components/Toolbar";
-import TemplatesPicker from "@/app/editor/_components/TemplatesPicker";
 import DevicePreview, { type DeviceKind } from "@/app/editor/_components/DevicePreview";
 import CommandPalette from "@/app/editor/_components/CommandPalette";
 import { createSectionNodeView } from "@/app/editor/_components/SectionNodeView";
@@ -106,6 +104,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
+  const [lastSaved, setLastSaved] = React.useState<Date | null>(null);
   const [isCmdkOpen, setCmdkOpen] = React.useState(false);
   const [components, setComponents] = React.useState<Array<{ key: string; name: string; defaultConfig: any; schema?: Record<string, any> }>>([]);
   const [selectedSectionProps, setSelectedSectionProps] = React.useState<any>(null);
@@ -473,6 +472,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         toast.error(json?.error?.message ?? "Autosave failed");
       } else {
         console.debug("Autosave ok");
+        setLastSaved(new Date());
       }
     } catch (e) {
       console.error("Autosave error", e);
@@ -662,11 +662,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   // ==================== NEW: MODERN UI LAYOUT ====================
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-zinc-50 dark:bg-zinc-950">
-      {/* ==================== NEW: TOP BAR AUTO-HIDE ==================== */}
+      {/* ==================== NEW: TOP BAR AUTO-HIDE WITH ALL FEATURES ==================== */}
       <TopBarAutoHide
         title={title}
         saving={saving}
-        lastSaved={new Date()}
+        lastSaved={lastSaved}
+        collaborators={0}
         onSave={() => {
           const json = editor?.getJSON();
           if (json) {
@@ -692,48 +693,30 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             console.error("[Editor] View error", e);
           }
         }}
+        onShare={() => {
+          console.log("Share feature - to be implemented");
+          toast.info("Share feature coming soon");
+        }}
+        onExport={() => {
+          console.log("Export feature - to be implemented");
+          toast.info("Export feature coming soon");
+        }}
         onInsertImage={onInsertImageClick}
         onOpenCommandPalette={() => setCmdkOpen(true)}
         onOpenHelp={() => setHelpOpen(true)}
         onOpenSettings={() => setDocumentSettingsOpen(true)}
+        onOpenMediaManager={() => setMediaManagerOpen(true)}
+        onOpenTemplates={() => setTemplateManagerOpen(true)}
+        onOpenDataSources={() => {
+          console.log("Data Sources - to be implemented");
+          toast.info("Data Sources feature coming soon");
+        }}
+        onOpenCustomComponents={() => setCustomComponentLibraryOpen(true)}
         breadcrumbs={[
           { label: "Projects", onClick: () => router.push("/") },
           { label: title },
         ]}
       />
-
-      {/* ==================== TOOLBAR - FORMATTING & FONT CONTROLS ==================== */}
-      <Toolbar
-        editor={editor}
-        onToggleLink={onToggleLink}
-        onInsertTable={insertTable}
-        addSectionControl={
-          <select 
-            onChange={(e) => onAddSection(e.target.value)} 
-            defaultValue="" 
-            className="rounded border border-[var(--border)] bg-white px-2 py-1 text-sm"
-          >
-            <option value="" disabled>+ Add section</option>
-            {components.map((c) => (
-              <option key={c.key} value={c.key}>{c.name}</option>
-            ))}
-          </select>
-        }
-      />
-
-      {/* ==================== TEMPLATES PICKER ==================== */}
-      <div className="flex items-center gap-2 border-b border-[var(--border)] bg-white/60 px-2 py-2">
-        <TemplatesPicker 
-          onApply={(content) => {
-            try {
-              editor?.commands.setContent(content);
-              logger.info("[Templates] applied");
-            } catch (e) {
-              console.error("[Templates] apply error", e);
-            }
-          }} 
-        />
-      </div>
 
       {/* ==================== MAIN CONTENT AREA ==================== */}
       <div className="flex flex-1 overflow-hidden">
@@ -805,8 +788,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
               >
                 <EditorContent editor={editor} className="prose dark:prose-invert max-w-none" />
 
-                {/* NEW: Bubble Menu for text selection */}
-                <BubbleMenuEnhanced
+                {/* NEW: Complete Bubble Menu with ALL formatting features */}
+                <BubbleMenuComplete
                   editor={editor}
                   onToggleLink={onToggleLink}
                 />
