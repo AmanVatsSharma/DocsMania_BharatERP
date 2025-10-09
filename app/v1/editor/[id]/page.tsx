@@ -1,19 +1,12 @@
 /**
- * MODERN EDITOR (V2) - NEW UI/UX
+ * ⚠️ OLD EDITOR (V1) - FOR COMPARISON ONLY
  * 
- * This is the new modern editor with improved UI.
- * Access at: /editor/[id]
+ * This is the original editor with the old UI.
+ * Access at: /v1/editor/[id]
  * 
- * Old UI available at: /v1/editor/[id] for comparison
+ * New modern UI is at: /editor/[id]
  * 
- * Features:
- * - Smart auto-hide top bar
- * - Sliding collapsible sidebars
- * - Modern bubble menu with ALL formatting
- * - Context-aware UI
- * - Keyboard shortcuts
- * - Beautiful animations
- * - ALL old features preserved!
+ * Compare both versions to see improvements!
  */
 
 "use client";
@@ -42,26 +35,24 @@ import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import Section from "@/lib/SectionExtension";
 import ParagraphExtended from "@/lib/ParagraphExtended";
-
-// NEW: Modern UI Components
-import { AnimatePresence } from "framer-motion";
-import { useEditorUI } from "@/lib/store/editorUI";
-import useEditorShortcuts from "@/lib/useKeyboardShortcuts";
-import TopBarAutoHide from "@/app/editor/_components/TopBarAutoHide";
-import LeftSidebarSliding from "@/app/editor/_components/LeftSidebarSliding";
-import RightInspectorSliding from "@/app/editor/_components/RightInspectorSliding";
-import BubbleMenuComplete from "@/app/editor/_components/BubbleMenuComplete";
-import SlashCommandsEnhanced from "@/app/editor/_components/SlashCommandsEnhanced";
-import ContextMenuEnhanced from "@/app/editor/_components/ContextMenuEnhanced";
-
-// Existing Features - Keep All
-import { SavingIndicator } from "@/app/editor/_components/LoadingStates";
+// Enhanced Enterprise Components
+import TopBarEnhanced from "@/app/editor/_components/TopBarEnhanced";
+import LeftSidebarEnhanced from "@/app/editor/_components/LeftSidebarEnhanced";
+import InspectorEnhanced from "@/app/editor/_components/InspectorEnhanced";
+import FloatingToolbar from "@/app/editor/_components/FloatingToolbar";
+import { SavingIndicator, EmptyDocumentState } from "@/app/editor/_components/LoadingStates";
 import "@/app/editor/_styles/enterprise-editor.css";
+import Toolbar from "@/app/editor/_components/Toolbar";
 import DevicePreview, { type DeviceKind } from "@/app/editor/_components/DevicePreview";
 import CommandPalette from "@/app/editor/_components/CommandPalette";
 import { createSectionNodeView } from "@/app/editor/_components/SectionNodeView";
 import EditorLoading from "./loading";
 import { useDebouncedCallback } from "@/lib/hooks";
+import SlashMenu from "@/app/editor/_components/SlashMenu";
+import EditorContextMenu from "@/app/editor/_components/ContextMenu";
+import TemplatesPicker from "@/app/editor/_components/TemplatesPicker";
+import { toast } from "sonner";
+import logger from "@/lib/logger";
 import HelpOverlay from "@/app/editor/_components/HelpOverlay";
 import { replaceCurrentTableWithMatrix } from "@/lib/tableUtils";
 import { TextSelection } from "prosemirror-state";
@@ -71,9 +62,8 @@ import DocumentSettings from "@/app/editor/_components/DocumentSettings";
 import TemplateManager from "@/app/editor/_components/TemplateManager";
 import ComponentBuilder from "@/app/editor/_components/ComponentBuilder";
 import CustomComponentLibrary from "@/app/editor/_components/CustomComponentLibrary";
-import { toast } from "sonner";
-import logger from "@/lib/logger";
-import { cn } from "@/lib/utils";
+
+// moved to lib/hooks.ts
 
 function findSelectedSection(editor: any): { pos: number; node: any; depth: number } | null {
   const { state } = editor;
@@ -93,31 +83,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   // React 19: params may be a Promise; unwrap with React.use()
   const resolvedParams = (React as any).use ? (React as any).use(params as any) : (params as any);
   const docId: string = resolvedParams?.id;
-
-  // ==================== NEW: UI STATE MANAGEMENT ====================
-  const {
-    leftSidebarOpen,
-    rightInspectorOpen,
-    topBarVisible,
-    viewMode,
-    leftSidebarCollapsed,
-    setLeftSidebarOpen,
-    toggleLeftSidebar,
-    toggleRightInspector,
-    setTopBarVisible,
-    enterFocusMode,
-    enterZenMode,
-    exitSpecialMode,
-  } = useEditorUI();
-
-  // ==================== EXISTING STATE (PRESERVED) ====================
   const [mounted, setMounted] = React.useState(false);
   const [title, setTitle] = React.useState("");
   const [slug, setSlug] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
-  const [lastSaved, setLastSaved] = React.useState<Date | null>(null);
   const [isCmdkOpen, setCmdkOpen] = React.useState(false);
   const [components, setComponents] = React.useState<Array<{ key: string; name: string; defaultConfig: any; schema?: Record<string, any> }>>([]);
   const [selectedSectionProps, setSelectedSectionProps] = React.useState<any>(null);
@@ -126,7 +97,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [leftTab, setLeftTab] = React.useState<'library' | 'outline'>("library");
   const [inspectorTab, setInspectorTab] = React.useState<'props' | 'layout' | 'style'>("props");
   const [libraryQuery, setLibraryQuery] = React.useState("");
-  const [leftWidth, setLeftWidth] = React.useState(280);
+  const [leftWidth, setLeftWidth] = React.useState(240);
   const [rightWidth, setRightWidth] = React.useState(320);
   const [device, setDevice] = React.useState<DeviceKind>("desktop");
   const [slashOpen, setSlashOpen] = React.useState(false);
@@ -138,39 +109,15 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [componentBuilderOpen, setComponentBuilderOpen] = React.useState(false);
   const [customComponentLibraryOpen, setCustomComponentLibraryOpen] = React.useState(false);
   const [documentMeta, setDocumentMeta] = React.useState<any>({});
+  const leftResizerRef = React.useRef<HTMLDivElement | null>(null);
+  const rightResizerRef = React.useRef<HTMLDivElement | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
-  const projectKeyRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
 
-  // ==================== NEW: KEYBOARD SHORTCUTS ====================
-  useEditorShortcuts({
-    onToggleLeftSidebar: toggleLeftSidebar,
-    onToggleRightInspector: toggleRightInspector,
-    onCommandPalette: () => setCmdkOpen(true),
-    onQuickSwitcher: () => console.log("Quick switcher - to be implemented"),
-    onFocusMode: enterFocusMode,
-    onZenMode: enterZenMode,
-    onSave: () => {
-      const json = editor?.getJSON();
-      if (json) {
-        void fetch(`/api/documents/${docId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: json }),
-        });
-        toast.success("Saved!");
-      }
-    },
-    onPublish: () => {
-      void onPublish();
-    },
-    onShowHelp: () => setHelpOpen(true),
-  });
-
-  // ==================== EXISTING FUNCTIONS (PRESERVED) ====================
+  // Fetch components (including custom components)
   async function fetchComponents() {
     try {
       const res = await fetch("/api/components");
@@ -194,7 +141,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const startWidth = leftWidth;
     function onMove(ev: MouseEvent) {
       const dx = ev.clientX - startX;
-      const next = Math.max(200, Math.min(500, startWidth + dx));
+      const next = Math.max(160, Math.min(480, startWidth + dx));
       setLeftWidth(next);
     }
     function onUp() {
@@ -227,6 +174,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       StarterKit,
       Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
       ImageExtended,
+      // Typography & formatting extensions
       Underline,
       Color,
       Highlight.configure({ multicolor: true }),
@@ -241,6 +189,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       TableHeader,
       TableCellExtended,
       TextStyleExtended,
+      // Override base paragraph with enterprise attrs (indent, spacing)
       ParagraphExtended,
       Section.extend({
         addNodeView() {
@@ -283,7 +232,23 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         try {
           const isMod = event.metaKey || event.ctrlKey;
           const key = event.key.toLowerCase();
-          // Note: Cmd+S and Cmd+Shift+P now handled by useEditorShortcuts
+          if (isMod && key === "s") {
+            event.preventDefault();
+            const json = view.state.doc.toJSON();
+            logger.info("Mod+S: saving draft");
+            void fetch(`/api/documents/${docId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ content: json }),
+            });
+            return true;
+          }
+          if (isMod && event.shiftKey && key === "p") {
+            event.preventDefault();
+            logger.info("Shift+Mod+P: publish");
+            void fetch(`/api/documents/${docId}/publish`, { method: "POST" });
+            return true;
+          }
           // Spreadsheet-like navigation
           if (editor?.isActive("table")) {
             if (key === "tab") {
@@ -352,10 +317,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                 if (node.nodeType === Node.ELEMENT_NODE) {
                   const el = node as HTMLElement;
                   if (!ALLOWED_TAGS.has(el.tagName)) {
+                    // Replace unknown tags by span to keep text
                     const span = doc.createElement("span");
                     span.innerHTML = el.innerHTML;
                     el.replaceWith(span);
                   } else {
+                    // Strip style/class/on* attributes; keep href on anchors
                     for (const attr of Array.from(el.attributes)) {
                       const name = attr.name.toLowerCase();
                       if (el.tagName === "A" && name === "href") continue;
@@ -382,11 +349,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
               return true;
             } catch (err) {
               console.error("[Paste] Word sanitize error", err);
+              // fallthrough to default paste
               return false;
             }
           }
 
+          // 3) If plain text with multiple lines and not in code, normalize newlines
           if (text && !editor?.isActive("codeBlock")) {
+            // Let Tiptap handle by default; do not interfere
             return false;
           }
           return false;
@@ -405,6 +375,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             const rect = trEl.getBoundingClientRect();
             const nearBottom = Math.abs(rect.bottom - event.clientY) <= 5;
             if (!nearBottom) return false;
+            // Ensure selection is inside this row for attribute updates
             const pos = view.posAtCoords({ left: rect.left + 4, top: rect.top + 4 });
             if (pos) {
               const sel = TextSelection.create(view.state.doc, pos.pos);
@@ -425,7 +396,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             if (!state?.active) return false;
             const dy = event.clientY - state.startY;
             const next = Math.max(20, Math.round(state.startHeight + dy));
+            // Immediate DOM feedback
             if (state.trEl) state.trEl.style.height = `${next}px`;
+            // Persist to doc
             editor?.chain().focus().updateAttributes("tableRow", { height: `${next}px` }).run();
             return true;
           } catch (e) {
@@ -485,7 +458,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         toast.error(json?.error?.message ?? "Autosave failed");
       } else {
         console.debug("Autosave ok");
-        setLastSaved(new Date());
       }
     } catch (e) {
       console.error("Autosave error", e);
@@ -494,6 +466,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       setSaving(false);
     }
   }, 1500);
+
+  const projectKeyRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
     async function load() {
@@ -522,6 +496,17 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const props = found?.defaultConfig ?? {};
     editor?.chain().focus().setSection({ componentKey: key, props }).run();
     console.info("Added section", key);
+  }
+
+  function onUpdateProps() {
+    if (!editor) return;
+    try {
+      if (!editor.isActive("section")) return;
+      editor.chain().focus().updateAttributes("section", { props: selectedSectionProps }).run();
+      console.info("Updated section props");
+    } catch (e) {
+      console.error("update props error", e);
+    }
   }
 
   function resetProps() {
@@ -668,42 +653,237 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     return sections;
   }
 
+  function renderPropsEditor() {
+    if (!selectedSectionKey || !selectedSectionProps) return (
+      <p style={{ color: "#888" }}>Select a section to edit in the editor</p>
+    );
+    const def = components.find((c) => c.key === selectedSectionKey);
+    const schema = (def?.schema ?? {}) as Record<string, any>;
+
+    function updateField(name: string, value: any) {
+      const next = { ...(selectedSectionProps ?? {}), [name]: value };
+      setSelectedSectionProps(next);
+      try {
+        editor?.chain().focus().updateAttributes("section", { props: next }).run();
+      } catch (e) {
+        console.error("update field error", e);
+      }
+    }
+
+    const entries = Object.entries(schema);
+    if (entries.length === 0) {
+      return (
+        <>
+          <p style={{ color: "#888" }}>No schema; using raw JSON.</p>
+          <textarea
+            value={JSON.stringify(selectedSectionProps, null, 2)}
+            onChange={(e) => {
+              try {
+                const parsed = JSON.parse(e.target.value);
+                setSelectedSectionProps(parsed);
+              } catch {}
+            }}
+            style={{ width: "100%", height: 200 }}
+          />
+          <button onClick={onUpdateProps} style={{ marginTop: 8 }}>Apply</button>
+        </>
+      );
+    }
+
+    return (
+      <div style={{ display: "grid", gap: 8 }}>
+        {entries.map(([name, cfg]) => {
+          const t = cfg?.type ?? "string";
+          const label = cfg?.label ?? name;
+          const value = selectedSectionProps?.[name] ?? "";
+          if (t === "object" && cfg?.fields) {
+            const fields = Object.entries(cfg.fields);
+            return (
+              <fieldset key={name} style={{ border: "1px solid #eee", borderRadius: 8, padding: 8 }}>
+                <legend style={{ padding: "0 6px", color: "#666" }}>{label}</legend>
+                <div style={{ display: "grid", gap: 6 }}>
+                  {fields.map(([child, childCfg]: any) => {
+                    const ct = childCfg?.type ?? "string";
+                    const clabel = childCfg?.label ?? child;
+                    const cval = (selectedSectionProps?.[name] ?? {})[child] ?? "";
+                    if (ct === "number") return (
+                      <label key={child} style={{ display: "grid", gap: 4 }}>
+                        <span>{clabel}</span>
+                        <input type="number" value={cval} onChange={(e) => updateField(name, { ...(selectedSectionProps?.[name] ?? {}), [child]: Number(e.target.value) })} />
+                      </label>
+                    );
+                    if (ct === "select" && Array.isArray(childCfg?.options)) return (
+                      <label key={child} style={{ display: "grid", gap: 4 }}>
+                        <span>{clabel}</span>
+                        <select value={cval} onChange={(e) => updateField(name, { ...(selectedSectionProps?.[name] ?? {}), [child]: e.target.value })}>
+                          {childCfg.options.map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
+                        </select>
+                      </label>
+                    );
+                    return (
+                      <label key={child} style={{ display: "grid", gap: 4 }}>
+                        <span>{clabel}</span>
+                        <input type="text" value={cval} onChange={(e) => updateField(name, { ...(selectedSectionProps?.[name] ?? {}), [child]: e.target.value })} />
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            );
+          }
+          if (t === "boolean") {
+            return (
+              <label key={name} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input type="checkbox" checked={!!value} onChange={(e) => updateField(name, e.target.checked)} /> {label}
+              </label>
+            );
+          }
+          if (t === "number") {
+            return (
+              <label key={name} style={{ display: "grid", gap: 4 }}>
+                <span>{label}</span>
+                <input type="number" value={value} onChange={(e) => updateField(name, Number(e.target.value))} />
+              </label>
+            );
+          }
+          if (t === "select" && Array.isArray(cfg?.options)) {
+            return (
+              <label key={name} style={{ display: "grid", gap: 4 }}>
+                <span>{label}</span>
+                <select value={value} onChange={(e) => updateField(name, e.target.value)}>
+                  {cfg.options.map((opt: string) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </label>
+            );
+          }
+          return (
+            <label key={name} style={{ display: "grid", gap: 4 }}>
+              <span>{label}</span>
+              <input type="text" value={value} onChange={(e) => updateField(name, e.target.value)} />
+            </label>
+          );
+        })}
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={resetProps}>Reset</button>
+          <button onClick={duplicateSection}>Duplicate</button>
+          <button onClick={deleteSection} style={{ color: "#b91c1c" }}>Delete</button>
+          <button onClick={() => setRawPropsMode((v) => !v)}>{rawPropsMode ? "Hide Raw" : "Raw JSON"}</button>
+        </div>
+        {rawPropsMode && (
+          <textarea
+            value={JSON.stringify(selectedSectionProps, null, 2)}
+            onChange={(e) => {
+              try {
+                const parsed = JSON.parse(e.target.value);
+                setSelectedSectionProps(parsed);
+              } catch {}
+            }}
+            style={{ width: "100%", height: 160 }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  function renderLayoutEditor() {
+    if (!selectedSectionKey || !selectedSectionProps) return <p style={{ color: "#888" }}>Select a section</p>;
+    const layout = selectedSectionProps.layout ?? {};
+    function setLayoutField(name: string, value: any) {
+      const next = { ...(selectedSectionProps ?? {}), layout: { ...(layout ?? {}), [name]: value } };
+      setSelectedSectionProps(next);
+      try { editor?.chain().focus().updateAttributes("section", { props: next }).run(); } catch {}
+    }
+    return (
+      <div style={{ display: "grid", gap: 8 }}>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span>Max Width (px)</span>
+          <input type="number" value={layout.maxWidth ?? 800} onChange={(e) => setLayoutField("maxWidth", Number(e.target.value))} />
+        </label>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span>Padding (px)</span>
+          <input type="number" value={layout.padding ?? 16} onChange={(e) => setLayoutField("padding", Number(e.target.value))} />
+        </label>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span>Margin Y (px)</span>
+          <input type="number" value={layout.marginY ?? 16} onChange={(e) => setLayoutField("marginY", Number(e.target.value))} />
+        </label>
+      </div>
+    );
+  }
+
+  function renderStyleEditor() {
+    if (!selectedSectionKey || !selectedSectionProps) return <p style={{ color: "#888" }}>Select a section</p>;
+    const style = selectedSectionProps.style ?? {};
+    function setStyleField(name: string, value: any) {
+      const next = { ...(selectedSectionProps ?? {}), style: { ...(style ?? {}), [name]: value } };
+      setSelectedSectionProps(next);
+      try { editor?.chain().focus().updateAttributes("section", { props: next }).run(); } catch {}
+    }
+    return (
+      <div style={{ display: "grid", gap: 8 }}>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span>Background</span>
+          <input type="color" value={style.backgroundColor ?? "#ffffff"} onChange={(e) => setStyleField("backgroundColor", e.target.value)} />
+        </label>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span>Text Color</span>
+          <input type="color" value={style.color ?? "#000000"} onChange={(e) => setStyleField("color", e.target.value)} />
+        </label>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span>Border Color</span>
+          <input type="color" value={style.borderColor ?? "#dddddd"} onChange={(e) => setStyleField("borderColor", e.target.value)} />
+        </label>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span>Border Width (px)</span>
+          <input type="number" value={style.borderWidth ?? 1} onChange={(e) => setStyleField("borderWidth", Number(e.target.value))} />
+        </label>
+      </div>
+    );
+  }
+
+  const filteredComponents = components.filter((c) => c.name.toLowerCase().includes(libraryQuery.toLowerCase()) || c.key.toLowerCase().includes(libraryQuery.toLowerCase()));
+
   if (!mounted) return null;
-  if (loading) return <EditorLoading/>;
+  // if (loading) return <div style={{ padding: 24 }}>Loading...</div>;
+  if (loading) return <EditorLoading/>
+
   if (error) return <div style={{ padding: 24, color: "red" }}>{error}</div>;
 
-  // ==================== NEW: MODERN UI LAYOUT ====================
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-zinc-50 dark:bg-zinc-950">
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       {/* Version Switcher Badge */}
-      <div className="fixed bottom-4 left-4 z-50">
+      <div style={{ position: "fixed", bottom: 16, left: 16, zIndex: 50 }}>
         <a
-          href={`/v1/editor/${docId}`}
-          className="flex items-center gap-2 rounded-full bg-zinc-900 px-4 py-2 text-xs font-medium text-white shadow-lg transition-all hover:scale-105 hover:bg-zinc-800 dark:bg-white dark:text-zinc-900"
-          title="Switch to old UI (V1) for comparison"
+          href={`/editor/${docId}`}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 16px",
+            background: "#3b82f6",
+            color: "white",
+            borderRadius: 9999,
+            fontSize: 12,
+            fontWeight: 600,
+            textDecoration: "none",
+            boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+            transition: "all 0.2s"
+          }}
+          title="Switch to new modern UI (V2)"
         >
-          <span>V2: Modern UI</span>
-          <span className="text-zinc-400 dark:text-zinc-600">→ Try V1</span>
+          <span>V1: Old UI</span>
+          <span style={{ opacity: 0.7 }}>→ Try V2 (Modern)</span>
         </a>
       </div>
 
-      {/* ==================== NEW: TOP BAR AUTO-HIDE WITH ALL FEATURES ==================== */}
-      <TopBarAutoHide
+      <TopBarEnhanced
         title={title}
         saving={saving}
-        lastSaved={lastSaved}
+        lastSaved={new Date()}
         collaborators={0}
-        onSave={() => {
-          const json = editor?.getJSON();
-          if (json) {
-            void fetch(`/api/documents/${docId}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ content: json }),
-            });
-            toast.success("Saved!");
-          }
-        }}
+        onInsertImageClick={onInsertImageClick}
         onPublish={onPublish}
         onView={() => {
           try {
@@ -718,125 +898,251 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             console.error("[Editor] View error", e);
           }
         }}
-        onShare={() => {
-          console.log("Share feature - to be implemented");
-          toast.info("Share feature coming soon");
-        }}
-        onExport={() => {
-          console.log("Export feature - to be implemented");
-          toast.info("Export feature coming soon");
-        }}
-        onInsertImage={onInsertImageClick}
         onOpenCommandPalette={() => setCmdkOpen(true)}
         onOpenHelp={() => setHelpOpen(true)}
-        onOpenSettings={() => setDocumentSettingsOpen(true)}
         onOpenMediaManager={() => setMediaManagerOpen(true)}
         onOpenTemplates={() => setTemplateManagerOpen(true)}
-        onOpenDataSources={() => {
-          console.log("Data Sources - to be implemented");
-          toast.info("Data Sources feature coming soon");
-        }}
+        onOpenSettings={() => setDocumentSettingsOpen(true)}
+        onOpenDataSources={() => {}}
         onOpenCustomComponents={() => setCustomComponentLibraryOpen(true)}
-        breadcrumbs={[
-          { label: "Projects", onClick: () => router.push("/") },
-          { label: title },
+        onShare={() => {}}
+        onExport={() => {}}
+      />
+      
+      {/* Floating Toolbar for text formatting */}
+      <FloatingToolbar
+        editor={editor}
+        isVisible={false}
+        position={null}
+      />
+      
+      {/* Saving Indicator */}
+      <SavingIndicator saving={saving} />
+      <CommandPalette
+        open={isCmdkOpen}
+        setOpen={setCmdkOpen}
+        components={components.map((c) => ({ key: c.key, name: c.name }))}
+        onInsertSection={(key) => onAddSection(key)}
+        actions={[
+          { id: "publish", label: "Publish", run: () => void onPublish() },
         ]}
       />
+      <SlashMenu editor={editor} components={components as any} open={slashOpen} setOpen={setSlashOpen} />
+      <HelpOverlay open={helpOpen} onOpenChange={setHelpOpen} />
+      <MediaManager 
+        open={mediaManagerOpen} 
+        onOpenChange={setMediaManagerOpen}
+        onInsertMedia={(url) => {
+          editor?.chain().focus().setImage({ src: url }).run();
+          toast.success("Image inserted");
+        }}
+      />
+      <BlockTemplates
+        open={blockTemplatesOpen}
+        onOpenChange={setBlockTemplatesOpen}
+        onApplyTemplate={(content) => {
+          editor?.commands.setContent(content);
+          toast.success("Template applied");
+        }}
+      />
+      <DocumentSettings
+        open={documentSettingsOpen}
+        onOpenChange={setDocumentSettingsOpen}
+        documentId={docId}
+        currentSettings={documentMeta.displaySettings}
+        onSave={saveDocumentSettings}
+      />
+      
+      {/* Template Manager */}
+      <TemplateManager
+        open={templateManagerOpen}
+        onOpenChange={setTemplateManagerOpen}
+        currentDocument={editor?.getJSON()}
+        onApplyTemplate={(template) => {
+          if (template.content) {
+            editor?.commands.setContent(template.content);
+            toast.success(`Template "${template.name}" applied!`);
+          }
+        }}
+      />
+      
+      {/* Component Builder */}
+      <ComponentBuilder
+        open={componentBuilderOpen}
+        onOpenChange={setComponentBuilderOpen}
+        onSave={async (component) => {
+          // Reload components after saving
+          await fetchComponents();
+          // Reload custom components into registry
+          const { loadCustomComponents } = await import("@/app/editor/_registry/sections");
+          await loadCustomComponents();
+          toast.success(`Component "${component.name}" saved!`);
+          setComponentBuilderOpen(false);
+        }}
+      />
+      
+      {/* Custom Component Library */}
+      <CustomComponentLibrary
+        open={customComponentLibraryOpen}
+        onOpenChange={setCustomComponentLibraryOpen}
+        onEdit={(component) => {
+          setComponentBuilderOpen(true);
+          setCustomComponentLibraryOpen(false);
+        }}
+        onRefresh={async () => {
+          await fetchComponents();
+          const { loadCustomComponents } = await import("@/app/editor/_registry/sections");
+          await loadCustomComponents();
+        }}
+      />
+      
+      <input ref={fileInputRef} onChange={onFileChange} type="file" accept="image/*" style={{ display: "none" }} />
 
-      {/* ==================== MAIN CONTENT AREA ==================== */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* ==================== NEW: LEFT SIDEBAR SLIDING ==================== */}
-        <AnimatePresence>
-          {leftSidebarOpen && (
-            <LeftSidebarSliding
-              width={leftWidth}
-              components={components}
-              libraryQuery={libraryQuery}
-              onLibraryQueryChange={setLibraryQuery}
-              onDragStartComponent={(e, c) => {
-                try {
-                  e.dataTransfer.setData(
-                    "application/x-dc-component",
-                    JSON.stringify({ key: c.key, props: c.defaultConfig })
-                  );
-                  e.dataTransfer.effectAllowed = "copy";
-                  logger.info("[LeftSidebar] Drag start", { key: c.key });
-                } catch (err) {
-                  console.error("[LeftSidebar] Drag error", err);
-                }
-              }}
-              onOutlineJump={(pos) => {
-                try {
-                  editor?.chain().focus().setTextSelection(pos + 1).run();
-                } catch (e) {
-                  console.error("outline nav error", e);
-                }
-              }}
-              onOutlineMove={(pos, dir) => {
-                try {
-                  const { state } = editor!;
-                  const node = state.doc.nodeAt(pos);
-                  if (!node || node.type.name !== "section") return;
-                  queueMicrotask(() => {
-                    const { moveSection } = require("@/app/editor/_logic/sectionTransforms");
-                    moveSection(editor!, pos, dir);
-                  });
-                } catch (e) {
-                  console.error("outline move error", e);
-                }
-              }}
-              outlineItems={getOutlineItems()}
-              activeTab={leftTab}
-              onChangeTab={setLeftTab}
-              onMouseDownResizer={startLeftResize}
-            />
-          )}
-        </AnimatePresence>
+      {/* Toolbar */}
+      <Toolbar
+        editor={editor}
+        onToggleLink={onToggleLink}
+        onInsertTable={insertTable}
+        addSectionControl={
+          <select onChange={(e) => onAddSection(e.target.value)} defaultValue="" className="rounded border border-[var(--border)] bg-white px-2 py-1 text-sm">
+            <option value="" disabled>
+              + Add section
+            </option>
+            {components.map((c) => (
+              <option key={c.key} value={c.key}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        }
+      />
+      <div className="flex items-center gap-2 border-b border-[var(--border)] bg-white/60 px-2 py-2">
+        <TemplatesPicker onApply={(content) => {
+          try {
+            editor?.commands.setContent(content);
+              logger.info("[Templates] applied");
+          } catch (e) {
+            console.error("[Templates] apply error", e);
+          }
+        }} />
+      </div>
 
-        {/* ==================== EDITOR CANVAS ==================== */}
-        <div className="flex-1 overflow-auto">
-          {/* NEW: Context Menu Enhancement - wraps everything */}
-          <ContextMenuEnhanced
-            editor={editor}
-            onInsertImage={onInsertImageClick}
-            onInsertLink={onToggleLink}
-          >
-            {/* Device Preview - PRESERVED */}
-            <DevicePreview device={device} onChange={setDevice}>
-              <div
-                className={cn(
-                  "mx-auto px-8 py-12 transition-all duration-300",
-                  viewMode === "focus" && "max-w-3xl",
-                  viewMode === "zen" && "max-w-2xl",
-                  viewMode === "normal" && "max-w-4xl"
-                )}
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+        <LeftSidebarEnhanced
+          width={leftWidth}
+          onMouseDownResizer={startLeftResize}
+          components={components as any}
+          libraryQuery={libraryQuery}
+          onLibraryQueryChange={setLibraryQuery}
+          onDragStartComponent={(e, c) => {
+            try {
+              e.dataTransfer.setData(
+                "application/x-dc-component",
+                JSON.stringify({ key: c.key, props: c.defaultConfig })
+              );
+              e.dataTransfer.effectAllowed = "copy";
+              logger.info("[LeftSidebar] Drag start", { key: c.key });
+            } catch (err) {
+              console.error("[LeftSidebar] Drag error", err);
+            }
+          }}
+          onOutlineJump={(pos) => {
+            try {
+              editor?.chain().focus().setTextSelection(pos + 1).run();
+            } catch (e) {
+              console.error("outline nav error", e);
+            }
+          }}
+          onOutlineMove={(pos, dir) => {
+            try {
+              const { state } = editor!;
+              const node = state.doc.nodeAt(pos);
+              if (!node || node.type.name !== "section") return;
+              queueMicrotask(() => {
+                const found = { pos } as any;
+                // dispatch through helper using actual pos
+                const { moveSection } = require("@/app/editor/_logic/sectionTransforms");
+                moveSection(editor!, pos, dir);
+              });
+            } catch (e) {
+              console.error("outline move error", e);
+            }
+          }}
+          outlineItems={getOutlineItems()}
+          activeTab={leftTab}
+          onChangeTab={setLeftTab}
+        />
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <DevicePreview device={device} onChange={setDevice}>
+            <div className="dc-surface p-6">
+              <EditorContextMenu
+                onSetParagraph={() => editor?.chain().focus().setParagraph().run()}
+                onHeading={(l) => editor?.chain().focus().toggleHeading({ level: l }).run()}
+                onBulletList={() => editor?.chain().focus().toggleBulletList().run()}
+                onOrderedList={() => editor?.chain().focus().toggleOrderedList().run()}
+                onIndent={() => {
+                  try {
+                    if (editor?.isActive("listItem")) editor?.chain().focus().sinkListItem("listItem").run();
+                    else (editor?.chain().focus() as any).increaseIndent?.().run();
+                  } catch (e) { console.error("context indent error", e); }
+                }}
+                onOutdent={() => {
+                  try {
+                    if (editor?.isActive("listItem")) editor?.chain().focus().liftListItem("listItem").run();
+                    else (editor?.chain().focus() as any).decreaseIndent?.().run();
+                  } catch (e) { console.error("context outdent error", e); }
+                }}
+                onBold={() => editor?.chain().focus().toggleBold().run()}
+                onItalic={() => editor?.chain().focus().toggleItalic().run()}
+                onStrike={() => editor?.chain().focus().toggleStrike().run()}
+                onUnderline={() => editor?.chain().focus().toggleUnderline().run()}
+                onAlign={(a: "left"|"center"|"right"|"justify") => editor?.chain().focus().setTextAlign(a).run()}
+                onLink={onToggleLink}
+                onFontSize={(px) => editor?.chain().focus().setMark('textStyle', { fontSize: `${px}px` }).run()}
+                onTextColor={(hex: string) => {
+                  try {
+                    const color = hex?.trim();
+                    if (!color) return;
+                    editor?.chain().focus().setColor(color).run();
+                    console.info("[ContextMenu] set text color", color);
+                  } catch (e) { console.error("set text color error", e); }
+                }}
+                onHighlightColor={(hex: string) => {
+                  try {
+                    const color = hex?.trim();
+                    if (!color) return;
+                    editor?.chain().focus().toggleHighlight({ color }).run();
+                    console.info("[ContextMenu] set highlight", color);
+                  } catch (e) { console.error("set highlight error", e); }
+                }}
+                onClearFormatting={() => {
+                  try {
+                    editor?.chain().focus().clearNodes().unsetAllMarks().run();
+                    console.info("[ContextMenu] cleared formatting");
+                  } catch (e) { console.error("clear formatting error", e); }
+                }}
+                onTableCommands={editor ? {
+                  addRowAbove: () => editor.chain().focus().addRowBefore().run(),
+                  addRowBelow: () => editor.chain().focus().addRowAfter().run(),
+                  addColLeft: () => editor.chain().focus().addColumnBefore().run(),
+                  addColRight: () => editor.chain().focus().addColumnAfter().run(),
+                  deleteRow: () => editor.chain().focus().deleteRow().run(),
+                  deleteCol: () => editor.chain().focus().deleteColumn().run(),
+                  merge: () => editor.chain().focus().mergeCells().run(),
+                  split: () => editor.chain().focus().splitCell().run(),
+                } : undefined}
               >
-                <EditorContent editor={editor} className="prose dark:prose-invert max-w-none" />
-
-                {/* NEW: Complete Bubble Menu with ALL formatting features */}
-                <BubbleMenuComplete
-                  editor={editor}
-                  onToggleLink={onToggleLink}
-                />
-              </div>
-            </DevicePreview>
-          </ContextMenuEnhanced>
+                <div style={{ overflowX: "auto" }}>
+                  <EditorContent editor={editor} />
+                </div>
+              </EditorContextMenu>
+            </div>
+          </DevicePreview>
         </div>
-
-        {/* ==================== RIGHT INSPECTOR - ALWAYS VISIBLE ==================== */}
-        <RightInspectorSliding
+        <InspectorEnhanced
           width={rightWidth}
           onMouseDownResizer={startRightResize}
-          selectedNode={
-            selectedSectionProps
-              ? {
-                  attrs: {
-                    props: selectedSectionProps,
-                    componentKey: selectedSectionKey,
-                  },
-                }
-              : null
-          }
+          selectedNode={selectedSectionProps ? { attrs: { props: selectedSectionProps, componentKey: selectedSectionKey } } : null}
           onUpdateProps={(next) => {
             setSelectedSectionProps(next);
             try {
@@ -850,7 +1156,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           onDuplicateNode={duplicateSection}
           onResetProps={resetProps}
           tab={inspectorTab}
-          onChangeTab={setInspectorTab}
+          onChangeTab={setInspectorTab as any}
           rawPropsMode={rawPropsMode}
           setRawPropsMode={setRawPropsMode}
           components={components}
@@ -862,103 +1168,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           }
         />
       </div>
-
-      {/* ==================== EXISTING MODALS & DIALOGS (ALL PRESERVED) ==================== */}
-      <input ref={fileInputRef} onChange={onFileChange} type="file" accept="image/*" style={{ display: "none" }} />
-
-      {/* Saving Indicator */}
-      <SavingIndicator saving={saving} />
-
-      {/* Command Palette - Keep existing for now */}
-      <CommandPalette
-        open={isCmdkOpen}
-        setOpen={setCmdkOpen}
-        components={components.map((c) => ({ key: c.key, name: c.name }))}
-        onInsertSection={(key) => onAddSection(key)}
-        actions={[
-          { id: "publish", label: "Publish", run: () => void onPublish() },
-        ]}
-      />
-
-      {/* NEW: Enhanced Slash Commands */}
-      <SlashCommandsEnhanced
-        editor={editor}
-        open={slashOpen}
-        setOpen={setSlashOpen}
-        components={components}
-      />
-
-      {/* Help Overlay */}
-      <HelpOverlay open={helpOpen} onOpenChange={setHelpOpen} />
-
-      {/* Media Manager */}
-      <MediaManager 
-        open={mediaManagerOpen} 
-        onOpenChange={setMediaManagerOpen}
-        onInsertMedia={(url) => {
-          editor?.chain().focus().setImage({ src: url }).run();
-          toast.success("Image inserted");
-        }}
-      />
-
-      {/* Block Templates */}
-      <BlockTemplates
-        open={blockTemplatesOpen}
-        onOpenChange={setBlockTemplatesOpen}
-        onApplyTemplate={(content) => {
-          editor?.commands.setContent(content);
-          toast.success("Template applied");
-        }}
-      />
-
-      {/* Document Settings */}
-      <DocumentSettings
-        open={documentSettingsOpen}
-        onOpenChange={setDocumentSettingsOpen}
-        documentId={docId}
-        currentSettings={documentMeta.displaySettings}
-        onSave={saveDocumentSettings}
-      />
-
-      {/* Template Manager */}
-      <TemplateManager
-        open={templateManagerOpen}
-        onOpenChange={setTemplateManagerOpen}
-        currentDocument={editor?.getJSON()}
-        onApplyTemplate={(template) => {
-          if (template.content) {
-            editor?.commands.setContent(template.content);
-            toast.success(`Template "${template.name}" applied!`);
-          }
-        }}
-      />
-
-      {/* Component Builder */}
-      <ComponentBuilder
-        open={componentBuilderOpen}
-        onOpenChange={setComponentBuilderOpen}
-        onSave={async (component) => {
-          await fetchComponents();
-          const { loadCustomComponents } = await import("@/app/editor/_registry/sections");
-          await loadCustomComponents();
-          toast.success(`Component "${component.name}" saved!`);
-          setComponentBuilderOpen(false);
-        }}
-      />
-
-      {/* Custom Component Library */}
-      <CustomComponentLibrary
-        open={customComponentLibraryOpen}
-        onOpenChange={setCustomComponentLibraryOpen}
-        onEdit={(component) => {
-          setComponentBuilderOpen(true);
-          setCustomComponentLibraryOpen(false);
-        }}
-        onCreate={() => {
-          setComponentBuilderOpen(true);
-          setCustomComponentLibraryOpen(false);
-        }}
-      />
     </div>
   );
 }

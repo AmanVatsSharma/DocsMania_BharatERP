@@ -56,19 +56,67 @@ export function HeroPreview({ props }: PreviewProps) {
 }
 
 export function ColumnsPreview({ props }: PreviewProps) {
-  const { columns = "3", gap = 24, equalHeight = true } = props || {};
+  const { 
+    columns = 2,
+    gap = 24, 
+    equalHeight = true,
+    columnWidths = "",
+    verticalAlign = "stretch",
+    style = {}
+  } = props || {};
+  
+  const numColumns = typeof columns === 'string' ? parseInt(columns) : columns;
+  
+  // Parse columnWidths from string (e.g., "30%,70%" or "1fr,2fr" or array)
+  let widths: string[] = [];
+  if (typeof columnWidths === 'string' && columnWidths.trim()) {
+    widths = columnWidths.split(',').map(w => w.trim());
+  } else if (Array.isArray(columnWidths)) {
+    widths = columnWidths;
+  }
+  
+  // If no widths specified, create equal distribution
+  if (widths.length === 0) {
+    widths = Array(numColumns).fill("1fr");
+  }
+  
+  // Ensure we have the right number of widths
+  const finalWidths = widths.slice(0, numColumns);
+  while (finalWidths.length < numColumns) {
+    finalWidths.push("1fr");
+  }
+  
+  const containerStyle: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: finalWidths.join(' '),
+    gap: `${gap}px`,
+    alignItems: equalHeight ? "stretch" : verticalAlign,
+    backgroundColor: style?.backgroundColor || "transparent",
+    padding: style?.padding ? `${style.padding}px` : "0",
+    borderRadius: style?.borderRadius ? `${style.borderRadius}px` : "0",
+  };
+
   return (
-    <div 
-      className="grid"
-      style={{
-        gridTemplateColumns: `repeat(${columns}, 1fr)`,
-        gap: `${gap}px`,
-        alignItems: equalHeight ? "stretch" : "start"
-      }}
-    >
-      {Array.from({ length: parseInt(columns) }).map((_, i) => (
-        <div key={i} className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-          <div className="text-sm text-zinc-500">Column {i + 1}</div>
+    <div style={containerStyle}>
+      {Array.from({ length: numColumns }).map((_, i) => (
+        <div 
+          key={i} 
+          className="column-item"
+          style={{
+            minHeight: "100px",
+            padding: "16px",
+            border: "1px dashed #e5e7eb",
+            borderRadius: "8px",
+            backgroundColor: "#fafafa",
+            position: "relative"
+          }}
+        >
+          <div className="text-xs text-zinc-400 mb-2">
+            Column {i + 1} ({finalWidths[i]})
+          </div>
+          <div className="text-sm text-zinc-600">
+            Drop components, images, or add text here
+          </div>
         </div>
       ))}
     </div>

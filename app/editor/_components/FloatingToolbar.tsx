@@ -1,3 +1,12 @@
+/**
+ * ⚠️ DEPRECATED - DO NOT USE
+ * This file has been replaced by BubbleMenuEnhanced.tsx
+ * Safe to delete after verifying new UI works
+ * 
+ * Replacement: /app/editor/_components/BubbleMenuEnhanced.tsx
+ * Migration Date: Current
+ */
+
 "use client";
 
 import React from "react";

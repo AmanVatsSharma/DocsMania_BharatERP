@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:db:push": "prisma db push",
-    "e2e:smoke": "node scripts/e2e-smoke.js"
+    "e2e:smoke": "node scripts/e2e-smoke.js",
+    "seed:templates": "npx tsx scripts/seed-templates.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
@@ -24,6 +25,12 @@
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@radix-ui/react-slot": "^1.1.7",
+    "framer-motion": "^11.0.0",
+    "zustand": "^4.5.0",
+    "react-hotkeys-hook": "^4.5.0",
+    "cmdk": "^1.1.1",
+    "@tiptap/extension-bubble-menu": "^3.4.4",
     "@tiptap/extension-code-block-lowlight": "^3.4.4",
     "@tiptap/extension-color": "3.4.4",
     "@tiptap/extension-font-family": "3.4.4",

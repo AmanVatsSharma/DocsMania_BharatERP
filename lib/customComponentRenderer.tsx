@@ -15,21 +15,94 @@ export interface CustomComponentDefinition {
 }
 
 /**
+ * Transform JSX to React.createElement calls (basic implementation)
+ * For production use, consider a proper JSX transformer like @babel/standalone
+ */
+function basicJSXTransform(code: string): string {
+  // This is a simplified JSX transformer
+  // It handles basic patterns but may not work for all complex JSX
+  
+  // Replace JSX tags with React.createElement
+  // Handle self-closing tags: <Component />
+  code = code.replace(
+    /<(\w+)(\s+[^>]*)?\s*\/>/g,
+    (match, tag, attrs) => {
+      if (!attrs || !attrs.trim()) {
+        return `React.createElement("${tag}", null)`;
+      }
+      // For simplicity, keep attributes as-is for now
+      return `React.createElement("${tag}", ${parseProps(attrs)})`;
+    }
+  );
+  
+  // Note: A full JSX transformer would need proper parsing
+  // This is just enough to handle the most common cases
+  
+  return code;
+}
+
+function parseProps(attrs: string): string {
+  // Very basic prop parsing - just returns the string for now
+  // A proper implementation would parse key="value" and {expr} patterns
+  const trimmed = attrs.trim();
+  if (!trimmed) return 'null';
+  
+  // For basic cases, wrap in object notation
+  // This is a simplified approach
+  return `{${trimmed}}`;
+}
+
+/**
  * Compile custom component code into a React component
  */
 export function compileCustomComponent(code: string): React.ComponentType<any> | null {
   try {
-    // Remove export default and create a function that returns the component
-    const componentCode = code.replace(/^export default\s+/, "return ");
+    // Clean up the code
+    let cleanCode = code.trim();
     
-    // Create a function that takes React and returns the component
-    const compiledFunction = new Function("React", "props", componentCode);
+    // Remove export default statement
+    if (cleanCode.includes("export default")) {
+      cleanCode = cleanCode.replace(/export\s+default\s+/, "");
+    }
     
-    // Return a wrapper component
+    // Detect if code is a function declaration and wrap it
+    if (cleanCode.startsWith("function ")) {
+      cleanCode = `(${cleanCode})`;
+    }
+    
+    // Try basic JSX transformation
+    // For better JSX support, you'd use @babel/standalone
+    const hasJSX = /<[a-zA-Z]/.test(cleanCode);
+    if (hasJSX) {
+      console.log("[CustomComponent] Detected JSX in component code");
+      // In production, you'd use a proper JSX transformer here
+      // cleanCode = basicJSXTransform(cleanCode);
+    }
+    
+    // Create a function that evaluates the component
+    // We pass React to make it available in the component scope
+    const componentFactory = new Function(
+      "React",
+      `
+      "use strict";
+      try {
+        // Return the component function
+        return (${cleanCode});
+      } catch (error) {
+        console.error("[CustomComponent] Factory error:", error);
+        throw error;
+      }
+      `
+    );
+    
+    // Get the component function
+    const ComponentFunction = componentFactory(React);
+    
+    // Return a wrapper that properly handles props
     return function CustomComponentWrapper({ props }: { props: any }) {
       try {
-        const Component = compiledFunction(React, props);
-        return React.createElement(Component, { props });
+        // Call the component with props
+        return React.createElement(ComponentFunction, { props });
       } catch (error) {
         console.error("[CustomComponent] Render error", error);
         return React.createElement("div", {

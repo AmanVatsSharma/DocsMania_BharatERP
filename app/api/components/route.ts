@@ -43,14 +43,32 @@ const seed = [
     key: "columns",
     name: "Column Layout",
     category: "Layout",
-    description: "Multi-column responsive layout",
+    description: "Multi-column responsive layout with adjustable widths",
     tags: ["layout", "grid", "responsive"],
     schema: {
-      columns: { type: "select", options: ["2", "3", "4"], label: "Columns" },
+      columns: { type: "select", options: ["2", "3", "4"], label: "Number of Columns" },
       gap: { type: "number", label: "Gap (px)" },
       equalHeight: { type: "boolean", label: "Equal Height" },
+      columnWidths: { type: "string", label: "Column Widths (e.g., 30%,70% or 1fr,2fr)" },
+      verticalAlign: { type: "select", options: ["stretch", "start", "center", "end"], label: "Vertical Align" },
+      style: {
+        type: "object",
+        label: "Style",
+        fields: {
+          backgroundColor: { type: "string", label: "Background" },
+          padding: { type: "number", label: "Padding (px)" },
+          borderRadius: { type: "number", label: "Radius (px)" },
+        },
+      },
     },
-    defaultConfig: { columns: "3", gap: 24, equalHeight: true },
+    defaultConfig: { 
+      columns: 2, 
+      gap: 24, 
+      equalHeight: true, 
+      columnWidths: "50%,50%",
+      verticalAlign: "stretch",
+      style: { backgroundColor: "transparent", padding: 0, borderRadius: 0 }
+    },
   },
   {
     key: "container",
