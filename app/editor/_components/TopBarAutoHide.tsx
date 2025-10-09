@@ -21,7 +21,14 @@ import {
   Menu,
   Pin,
   PinOff,
+  Sparkles,
+  Database,
+  Code,
+  FileText,
+  Download,
+  Upload,
 } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useEditorUI } from "@/lib/store/editorUI";
 import { transitions } from "@/lib/animations";
 import { cn } from "@/lib/utils";
@@ -30,14 +37,20 @@ export interface TopBarAutoHideProps {
   title?: string;
   saving?: boolean;
   lastSaved?: Date;
+  collaborators?: number;
   onSave?: () => void;
   onPublish?: () => void;
   onView?: () => void;
   onShare?: () => void;
+  onExport?: () => void;
   onInsertImage?: () => void;
   onOpenCommandPalette?: () => void;
   onOpenHelp?: () => void;
   onOpenSettings?: () => void;
+  onOpenMediaManager?: () => void;
+  onOpenTemplates?: () => void;
+  onOpenDataSources?: () => void;
+  onOpenCustomComponents?: () => void;
   breadcrumbs?: Array<{ label: string; onClick?: () => void }>;
 }
 

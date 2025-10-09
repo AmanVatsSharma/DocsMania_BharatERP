@@ -192,6 +192,44 @@ export default function BubbleMenuEnhanced({ editor, onToggleLink }: BubbleMenuE
 
         <div className="h-6 w-px bg-zinc-300 dark:bg-zinc-700" />
 
+        {/* Font Size */}
+        <select
+          onChange={(e) => {
+            const px = Number(e.target.value);
+            if (px) {
+              editor.chain().focus().setMark('textStyle', { fontSize: `${px}px` }).run();
+            }
+          }}
+          className="h-8 rounded border border-zinc-300 bg-white px-2 text-xs dark:border-zinc-700 dark:bg-zinc-800"
+          title="Font Size"
+        >
+          <option value="">Size</option>
+          {[12, 14, 16, 18, 20, 24, 28, 32, 36, 48].map((px) => (
+            <option key={px} value={px}>{px}px</option>
+          ))}
+        </select>
+
+        {/* Font Family */}
+        <select
+          onChange={(e) => {
+            const font = e.target.value;
+            if (font) {
+              editor.chain().focus().setFontFamily(font).run();
+            } else {
+              editor.chain().focus().unsetFontFamily().run();
+            }
+          }}
+          className="h-8 rounded border border-zinc-300 bg-white px-2 text-xs dark:border-zinc-700 dark:bg-zinc-800"
+          title="Font Family"
+        >
+          <option value="">Font</option>
+          <option value="Inter, ui-sans-serif, system-ui, -apple-system">Sans</option>
+          <option value="Georgia, Cambria, 'Times New Roman', Times, serif">Serif</option>
+          <option value="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas">Mono</option>
+        </select>
+
+        <div className="h-6 w-px bg-zinc-300 dark:bg-zinc-700" />
+
         {/* Link */}
         <button
           onClick={onToggleLink}

@@ -54,17 +54,8 @@ export default function RightInspectorSliding(props: RightInspectorSlidingProps)
 
   const [isPinned, setIsPinned] = React.useState(false);
 
-  // Auto-show inspector when something is selected
-  React.useEffect(() => {
-    if (selectedNode && autoShowInspector && !isPinned) {
-      setRightInspectorOpen(true);
-    }
-  }, [selectedNode, autoShowInspector, isPinned, setRightInspectorOpen]);
-
-  // Don't render if not open
-  if (!rightInspectorOpen) {
-    return null;
-  }
+  // Inspector is always visible in new design
+  // Note: Removed conditional rendering to match old behavior
 
   const selectedSectionKey = selectedNode?.attrs?.componentKey;
   const selectedSectionProps = selectedNode?.attrs?.props || {};

@@ -44,6 +44,8 @@ import ContextMenuEnhanced from "@/app/editor/_components/ContextMenuEnhanced";
 // Existing Features - Keep All
 import { SavingIndicator } from "@/app/editor/_components/LoadingStates";
 import "@/app/editor/_styles/enterprise-editor.css";
+import Toolbar from "@/app/editor/_components/Toolbar";
+import TemplatesPicker from "@/app/editor/_components/TemplatesPicker";
 import DevicePreview, { type DeviceKind } from "@/app/editor/_components/DevicePreview";
 import CommandPalette from "@/app/editor/_components/CommandPalette";
 import { createSectionNodeView } from "@/app/editor/_components/SectionNodeView";
@@ -700,6 +702,39 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         ]}
       />
 
+      {/* ==================== TOOLBAR - FORMATTING & FONT CONTROLS ==================== */}
+      <Toolbar
+        editor={editor}
+        onToggleLink={onToggleLink}
+        onInsertTable={insertTable}
+        addSectionControl={
+          <select 
+            onChange={(e) => onAddSection(e.target.value)} 
+            defaultValue="" 
+            className="rounded border border-[var(--border)] bg-white px-2 py-1 text-sm"
+          >
+            <option value="" disabled>+ Add section</option>
+            {components.map((c) => (
+              <option key={c.key} value={c.key}>{c.name}</option>
+            ))}
+          </select>
+        }
+      />
+
+      {/* ==================== TEMPLATES PICKER ==================== */}
+      <div className="flex items-center gap-2 border-b border-[var(--border)] bg-white/60 px-2 py-2">
+        <TemplatesPicker 
+          onApply={(content) => {
+            try {
+              editor?.commands.setContent(content);
+              logger.info("[Templates] applied");
+            } catch (e) {
+              console.error("[Templates] apply error", e);
+            }
+          }} 
+        />
+      </div>
+
       {/* ==================== MAIN CONTENT AREA ==================== */}
       <div className="flex flex-1 overflow-hidden">
         {/* ==================== NEW: LEFT SIDEBAR SLIDING ==================== */}
@@ -780,48 +815,44 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           </ContextMenuEnhanced>
         </div>
 
-        {/* ==================== NEW: RIGHT INSPECTOR SLIDING ==================== */}
-        <AnimatePresence>
-          {rightInspectorOpen && (
-            <RightInspectorSliding
-              width={rightWidth}
-              onMouseDownResizer={startRightResize}
-              selectedNode={
-                selectedSectionProps
-                  ? {
-                      attrs: {
-                        props: selectedSectionProps,
-                        componentKey: selectedSectionKey,
-                      },
-                    }
-                  : null
-              }
-              onUpdateProps={(next) => {
-                setSelectedSectionProps(next);
-                try {
-                  editor?.chain().focus().updateAttributes("section", { props: next }).run();
-                  console.info("[Inspector] Update attributes applied");
-                } catch (e) {
-                  console.error("[Inspector] update attributes error", e);
+        {/* ==================== RIGHT INSPECTOR - ALWAYS VISIBLE ==================== */}
+        <RightInspectorSliding
+          width={rightWidth}
+          onMouseDownResizer={startRightResize}
+          selectedNode={
+            selectedSectionProps
+              ? {
+                  attrs: {
+                    props: selectedSectionProps,
+                    componentKey: selectedSectionKey,
+                  },
                 }
-              }}
-              onDeleteNode={deleteSection}
-              onDuplicateNode={duplicateSection}
-              onResetProps={resetProps}
-              tab={inspectorTab}
-              onChangeTab={setInspectorTab}
-              rawPropsMode={rawPropsMode}
-              setRawPropsMode={setRawPropsMode}
-              components={components}
-              bottomExtra={
-                <>
-                  <TableInspector editor={editor} />
-                  <ImageInspector editor={editor} />
-                </>
-              }
-            />
-          )}
-        </AnimatePresence>
+              : null
+          }
+          onUpdateProps={(next) => {
+            setSelectedSectionProps(next);
+            try {
+              editor?.chain().focus().updateAttributes("section", { props: next }).run();
+              console.info("[Inspector] Update attributes applied");
+            } catch (e) {
+              console.error("[Inspector] update attributes error", e);
+            }
+          }}
+          onDeleteNode={deleteSection}
+          onDuplicateNode={duplicateSection}
+          onResetProps={resetProps}
+          tab={inspectorTab}
+          onChangeTab={setInspectorTab}
+          rawPropsMode={rawPropsMode}
+          setRawPropsMode={setRawPropsMode}
+          components={components}
+          bottomExtra={
+            <>
+              <TableInspector editor={editor} />
+              <ImageInspector editor={editor} />
+            </>
+          }
+        />
       </div>
 
       {/* ==================== EXISTING MODALS & DIALOGS (ALL PRESERVED) ==================== */}
