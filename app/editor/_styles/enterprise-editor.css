@@ -3,6 +3,59 @@
  * Professional animations, transitions, and micro-interactions
  */
 
+/* Page Break Styles */
+.page-break {
+  page-break-after: always;
+  break-after: page;
+  margin: 2rem 0;
+  border-top: 2px dashed #d4d4d8;
+  padding: 1rem 0;
+  text-align: center;
+  color: #71717a;
+  font-size: 0.75rem;
+  user-select: none;
+}
+
+@media print {
+  .page-break {
+    border-top: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Footnote Styles */
+.footnote-reference {
+  vertical-align: super;
+  font-size: 0.75em;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.footnote-reference:hover {
+  background-color: #dbeafe;
+}
+
+/* Equation Styles */
+.equation-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.equation-container.inline-equation {
+  display: inline-flex;
+  margin: 0 0.25rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.equation-display {
+  font-family: 'Courier New', monospace;
+  white-space: pre-wrap;
+}
+
 /* Smooth Animations */
 @keyframes fadeIn {
   from {

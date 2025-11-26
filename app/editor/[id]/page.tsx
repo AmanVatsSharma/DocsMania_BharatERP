@@ -58,6 +58,13 @@ import TableOfContents from "@/app/editor/_components/TableOfContents";
 import ExportDialog from "@/app/editor/_components/ExportDialog";
 import ImportDialog from "@/app/editor/_components/ImportDialog";
 import DriveBrowser from "@/app/editor/_components/DriveBrowser";
+import SuggestionsMode from "@/app/editor/_components/SuggestionsMode";
+import FootnotesPanel from "@/app/editor/_components/FootnotesPanel";
+import EquationEditor from "@/app/editor/_components/EquationEditor";
+import WordCount from "@/app/editor/_components/WordCount";
+import { Footnote } from "@/lib/FootnoteExtension";
+import { Equation } from "@/lib/EquationExtension";
+import { PageBreak } from "@/lib/PageBreakExtension";
 
 // moved to lib/hooks.ts
 
@@ -123,6 +130,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     orientation: "portrait",
     margins: { top: 1, bottom: 1, left: 1, right: 1 },
   });
+  const [suggestionsModeEnabled, setSuggestionsModeEnabled] = React.useState(false);
+  const [footnotesOpen, setFootnotesOpen] = React.useState(false);
+  const [equationEditorOpen, setEquationEditorOpen] = React.useState(false);
   const leftResizerRef = React.useRef<HTMLDivElement | null>(null);
   const rightResizerRef = React.useRef<HTMLDivElement | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -205,6 +215,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       TextStyleExtended,
       // Override base paragraph with enterprise attrs (indent, spacing)
       ParagraphExtended,
+      // Google Docs-like features
+      Footnote,
+      Equation,
+      PageBreak,
       Section.extend({
         addNodeView() {
           const nameLookup = (key: string) => {
@@ -308,6 +322,27 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
               event.preventDefault();
               setExportOpen(true);
               logger.info("Mod+E: open export");
+              return true;
+            }
+            // Footnotes: Cmd+Alt+F
+            if (isMod && event.altKey && key === "f") {
+              event.preventDefault();
+              setFootnotesOpen(!footnotesOpen);
+              logger.info("Mod+Alt+F: toggle footnotes");
+              return true;
+            }
+            // Equation: Cmd+Alt+E
+            if (isMod && event.altKey && key === "e") {
+              event.preventDefault();
+              setEquationEditorOpen(true);
+              logger.info("Mod+Alt+E: open equation editor");
+              return true;
+            }
+            // Suggestions Mode: Cmd+Alt+S
+            if (isMod && event.altKey && key === "s") {
+              event.preventDefault();
+              setSuggestionsModeEnabled(!suggestionsModeEnabled);
+              logger.info("Mod+Alt+S: toggle suggestions mode");
               return true;
             }
           // Spreadsheet-like navigation
@@ -995,6 +1030,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         onOpenVersionHistory={() => setVersionHistoryOpen(true)}
         onOpenPageSetup={() => setPageSetupOpen(true)}
         onOpenTOC={() => setTocOpen(true)}
+        onOpenFootnotes={() => setFootnotesOpen(true)}
+        onOpenEquation={() => setEquationEditorOpen(true)}
+        onToggleSuggestions={() => setSuggestionsModeEnabled(!suggestionsModeEnabled)}
+        wordCount={<WordCount editor={editor} />}
       />
       
       {/* Floating Toolbar for text formatting */}
@@ -1116,6 +1155,28 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           bucket: process.env.NEXT_PUBLIC_AWS_S3_BUCKET || "",
           region: process.env.NEXT_PUBLIC_AWS_REGION || "us-east-1",
         }}
+      />
+      
+      {/* Suggestions Mode */}
+      <SuggestionsMode
+        editor={editor}
+        enabled={suggestionsModeEnabled}
+        onToggle={setSuggestionsModeEnabled}
+        currentAuthor="You"
+      />
+      
+      {/* Footnotes Panel */}
+      <FootnotesPanel
+        editor={editor}
+        open={footnotesOpen}
+        onOpenChange={setFootnotesOpen}
+      />
+      
+      {/* Equation Editor */}
+      <EquationEditor
+        editor={editor}
+        open={equationEditorOpen}
+        onOpenChange={setEquationEditorOpen}
       />
       
       <MediaManager 

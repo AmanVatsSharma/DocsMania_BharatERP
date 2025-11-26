@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Bold, Italic, Strikethrough, Code, Heading1, Heading2, Heading3, List, ListOrdered, Quote, Link as LinkIcon, Table as TableIcon, Undo2, Redo2, Underline as UnderlineIcon, AlignLeft, AlignCenter, AlignRight, AlignJustify, ListTodo, Eraser, IndentIncrease, IndentDecrease } from "lucide-react";
+import { Bold, Italic, Strikethrough, Code, Heading1, Heading2, Heading3, List, ListOrdered, Quote, Link as LinkIcon, Table as TableIcon, Undo2, Redo2, Underline as UnderlineIcon, AlignLeft, AlignCenter, AlignRight, AlignJustify, ListTodo, Eraser, IndentIncrease, IndentDecrease, FileText } from "lucide-react";
 import { clsx } from "clsx";
 
 export interface ToolbarProps {
@@ -60,6 +60,7 @@ export default function Toolbar(props: ToolbarProps) {
       <button onClick={() => editor?.chain().focus().toggleBlockquote().run()} disabled={!editor} className="rounded border border-[var(--border)] px-2 py-1 text-sm hover:bg-zinc-50"> <Quote className="inline h-4 w-4" /></button>
       <button onClick={onToggleLink} disabled={!editor} className="rounded border border-[var(--border)] px-2 py-1 text-sm hover:bg-zinc-50"> <LinkIcon className="inline h-4 w-4" /></button>
       <button onClick={onInsertTable} disabled={!editor} className="rounded border border-[var(--border)] px-2 py-1 text-sm hover:bg-zinc-50"> <TableIcon className="inline h-4 w-4" /></button>
+      <button onClick={() => editor?.chain().focus().setPageBreak().run()} disabled={!editor} className="rounded border border-[var(--border)] px-2 py-1 text-sm hover:bg-zinc-50" title="Insert Page Break (Cmd+Enter)"> <FileText className="inline h-4 w-4" /></button>
 
       {/* Alignment group */}
       <span className="mx-1 h-5 w-px bg-zinc-200" />

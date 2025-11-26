@@ -5,7 +5,8 @@ import {
   ChevronRight, Command, ImagePlus, Rocket, Search, Loader2, 
   Sparkles, Settings, Eye, Database, Code, Users, Clock,
   CheckCircle2, AlertCircle, MoreHorizontal, Share2, Download,
-  MessageSquare, History, FileText, List, Upload, Folder
+  MessageSquare, History, FileText, List, Upload, Folder,
+  Function, FileText as FileTextIcon, Edit3
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { clsx } from "clsx";
@@ -33,6 +34,10 @@ export interface TopBarEnhancedProps {
   onOpenVersionHistory?: () => void;
   onOpenPageSetup?: () => void;
   onOpenTOC?: () => void;
+  onOpenFootnotes?: () => void;
+  onOpenEquation?: () => void;
+  onToggleSuggestions?: () => void;
+  wordCount?: React.ReactNode;
 }
 
 /**
@@ -65,6 +70,10 @@ export default function TopBarEnhanced(props: TopBarEnhancedProps) {
     onOpenVersionHistory,
     onOpenPageSetup,
     onOpenTOC,
+    onOpenFootnotes,
+    onOpenEquation,
+    onToggleSuggestions,
+    wordCount,
   } = props;
 
   const timeAgo = lastSaved ? getTimeAgo(lastSaved) : null;
@@ -256,6 +265,31 @@ export default function TopBarEnhanced(props: TopBarEnhancedProps) {
                   <FileText className="h-4 w-4" />
                   Page Setup
                 </DropdownMenu.Item>
+                <DropdownMenu.Separator className="my-1 h-px bg-zinc-200" />
+                <DropdownMenu.Item
+                  onClick={onOpenFootnotes}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 outline-none hover:bg-zinc-50"
+                >
+                  <FileTextIcon className="h-4 w-4" />
+                  Footnotes
+                  <span className="ml-auto text-xs text-zinc-400">⌘⌥F</span>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  onClick={onOpenEquation}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 outline-none hover:bg-zinc-50"
+                >
+                  <Function className="h-4 w-4" />
+                  Insert Equation
+                  <span className="ml-auto text-xs text-zinc-400">⌘⌥E</span>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  onClick={onToggleSuggestions}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 outline-none hover:bg-zinc-50"
+                >
+                  <Edit3 className="h-4 w-4" />
+                  Suggestions Mode
+                  <span className="ml-auto text-xs text-zinc-400">⌘⌥S</span>
+                </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu.Root>
@@ -265,6 +299,13 @@ export default function TopBarEnhanced(props: TopBarEnhancedProps) {
             <div className="hidden items-center gap-2 rounded-lg border border-zinc-200 px-3 py-1.5 lg:flex">
               <Users className="h-4 w-4 text-zinc-400" />
               <span className="text-sm text-zinc-600">{collaborators}</span>
+            </div>
+          )}
+
+          {/* Word Count */}
+          {wordCount && (
+            <div className="hidden lg:flex">
+              {wordCount}
             </div>
           )}
 
