@@ -50,6 +50,7 @@ import DocumentSettings from "@/app/editor/_components/DocumentSettings";
 import TemplateManager from "@/app/editor/_components/TemplateManager";
 import ComponentBuilder from "@/app/editor/_components/ComponentBuilder";
 import CustomComponentLibrary from "@/app/editor/_components/CustomComponentLibrary";
+import FindReplace from "@/app/editor/_components/FindReplace";
 
 // moved to lib/hooks.ts
 
@@ -97,6 +98,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [componentBuilderOpen, setComponentBuilderOpen] = React.useState(false);
   const [customComponentLibraryOpen, setCustomComponentLibraryOpen] = React.useState(false);
   const [documentMeta, setDocumentMeta] = React.useState<any>({});
+  const [floatingToolbarVisible, setFloatingToolbarVisible] = React.useState(false);
+  const [floatingToolbarPosition, setFloatingToolbarPosition] = React.useState<{ top: number; left: number } | null>(null);
+  const [findReplaceOpen, setFindReplaceOpen] = React.useState(false);
+  const [findReplaceMode, setFindReplaceMode] = React.useState<"find" | "replace">("find");
   const leftResizerRef = React.useRef<HTMLDivElement | null>(null);
   const rightResizerRef = React.useRef<HTMLDivElement | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -192,6 +197,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     autofocus: true,
     immediatelyRender: false,
     editorProps: {
+      // Enable browser spell check
+      attributes: {
+        spellcheck: "true",
+      },
       handleDrop(view: any, event: DragEvent) {
         try {
           const dt = event.dataTransfer;
@@ -237,6 +246,21 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             void fetch(`/api/documents/${docId}/publish`, { method: "POST" });
             return true;
           }
+          // Find & Replace shortcuts
+          if (isMod && key === "f") {
+            event.preventDefault();
+            setFindReplaceMode("find");
+            setFindReplaceOpen(true);
+            logger.info("Mod+F: open find");
+            return true;
+          }
+          if (isMod && key === "h") {
+            event.preventDefault();
+            setFindReplaceMode("replace");
+            setFindReplaceOpen(true);
+            logger.info("Mod+H: open replace");
+            return true;
+          }
           // Spreadsheet-like navigation
           if (editor?.isActive("table")) {
             if (key === "tab") {
@@ -266,8 +290,22 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       },
       handlePaste: (view: any, event: ClipboardEvent, slice: any) => {
         try {
+          // Check for Paste Without Formatting (Cmd+Shift+V)
+          const isMod = event.metaKey || event.ctrlKey;
+          const isShift = event.shiftKey;
+          const pasteWithoutFormatting = isMod && isShift;
+          
           const text = event.clipboardData?.getData("text/plain") ?? "";
           const html = event.clipboardData?.getData("text/html") ?? "";
+          
+          // If paste without formatting, insert plain text only
+          if (pasteWithoutFormatting && text) {
+            event.preventDefault();
+            editor?.chain().focus().insertContent(text).run();
+            console.info("[Paste] Paste without formatting", { textLength: text.length });
+            toast.success("Pasted as plain text");
+            return true;
+          }
 
           // 1) If pasting into a table and content looks tabular, handle CSV/TSV paste
           if (editor?.isActive("table") && text) {
@@ -414,18 +452,50 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     },
     onSelectionUpdate: ({ editor }) => {
       try {
+        // Handle section selection
         if (editor.isActive("section")) {
           const attrs = editor.getAttributes("section");
           setSelectedSectionKey(attrs?.componentKey ?? null);
           setSelectedSectionProps(attrs?.props ?? {});
+          setFloatingToolbarVisible(false);
+          setFloatingToolbarPosition(null);
         } else {
           setSelectedSectionKey(null);
           setSelectedSectionProps(null);
+          
+          // Handle text selection for floating toolbar
+          const { from, to } = editor.state.selection;
+          const hasSelection = from !== to;
+          
+          if (hasSelection && !editor.isActive("table")) {
+            // Get selection coordinates
+            try {
+              const { view } = editor;
+              const startCoords = view.coordsAtPos(from);
+              const endCoords = view.coordsAtPos(to);
+              
+              // Position toolbar above selection, centered horizontally
+              const top = Math.min(startCoords.top, endCoords.top) - 10;
+              const left = (startCoords.left + endCoords.left) / 2;
+              
+              setFloatingToolbarPosition({ top, left });
+              setFloatingToolbarVisible(true);
+              console.debug("[FloatingToolbar] Showing at", { top, left, from, to });
+            } catch (coordError) {
+              console.error("[FloatingToolbar] Error calculating position", coordError);
+              setFloatingToolbarVisible(false);
+            }
+          } else {
+            setFloatingToolbarVisible(false);
+            setFloatingToolbarPosition(null);
+          }
         }
       } catch (e) {
         console.error("selection update error", e);
         setSelectedSectionKey(null);
         setSelectedSectionProps(null);
+        setFloatingToolbarVisible(false);
+        setFloatingToolbarPosition(null);
       }
     },
     onCreate: () => console.info("Tiptap editor created"),
@@ -873,8 +943,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       {/* Floating Toolbar for text formatting */}
       <FloatingToolbar
         editor={editor}
-        isVisible={false}
-        position={null}
+        isVisible={floatingToolbarVisible}
+        position={floatingToolbarPosition}
       />
       
       {/* Saving Indicator */}
@@ -890,6 +960,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       />
       <SlashMenu editor={editor} components={components as any} open={slashOpen} setOpen={setSlashOpen} />
       <HelpOverlay open={helpOpen} onOpenChange={setHelpOpen} />
+      <FindReplace
+        editor={editor}
+        open={findReplaceOpen}
+        onOpenChange={setFindReplaceOpen}
+        mode={findReplaceMode}
+      />
       <MediaManager 
         open={mediaManagerOpen} 
         onOpenChange={setMediaManagerOpen}
@@ -1094,7 +1170,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                 } : undefined}
               >
                 <div style={{ overflowX: "auto" }}>
-                  <EditorContent editor={editor} />
+                  <EditorContent 
+                    editor={editor}
+                    className="spell-check-enabled"
+                    style={{ 
+                      // Enable browser spell check styling
+                      WebkitTextSizeAdjust: '100%',
+                    }}
+                  />
                 </div>
               </EditorContextMenu>
             </div>

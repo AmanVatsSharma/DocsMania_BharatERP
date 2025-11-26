@@ -264,6 +264,21 @@
 .ProseMirror {
   min-height: 400px;
   outline: none;
+  /* Enable spell check */
+  spellcheck: true;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Spell check error styling */
+.ProseMirror [spellcheck="true"] {
+  /* Browser will show red underline for misspelled words */
+}
+
+/* Custom spell check indicator (if needed) */
+.ProseMirror mark.spell-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-bottom: 2px wavy rgba(239, 68, 68, 0.5);
+  text-decoration: none;
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {

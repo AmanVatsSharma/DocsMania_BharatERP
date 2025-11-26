@@ -140,7 +140,7 @@ export default function FloatingToolbar(props: FloatingToolbarProps) {
                   <button
                     key={color.hex}
                     onClick={() => {
-                      editor.chain().focus().setMark("textStyle", { color: color.hex }).run();
+                      editor.chain().focus().setColor(color.hex).run();
                     }}
                     className="group relative flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 hover:border-zinc-400"
                     title={color.name}
@@ -177,7 +177,7 @@ export default function FloatingToolbar(props: FloatingToolbarProps) {
                       if (color.hex === "transparent") {
                         editor.chain().focus().unsetHighlight().run();
                       } else {
-                        editor.chain().focus().setHighlight({ color: color.hex }).run();
+                        editor.chain().focus().toggleHighlight({ color: color.hex }).run();
                       }
                     }}
                     className="group relative flex h-8 w-full items-center justify-center rounded-lg border border-zinc-200 hover:border-zinc-400"
