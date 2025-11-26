@@ -6,7 +6,7 @@ import {
   Sparkles, Settings, Eye, Database, Code, Users, Clock,
   CheckCircle2, AlertCircle, MoreHorizontal, Share2, Download,
   MessageSquare, History, FileText, List, Upload, Folder,
-  Function, FileText as FileTextIcon, Edit3
+  FunctionSquare, FileText as FileTextIcon, Edit3
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { clsx } from "clsx";
@@ -262,7 +262,7 @@ export default function TopBarEnhanced(props: TopBarEnhancedProps) {
                   onClick={onOpenEquation}
                   className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-700 outline-none transition-colors hover:bg-violet-50 hover:text-violet-900"
                 >
-                  <Function className="h-4 w-4 text-zinc-500" />
+                  <FunctionSquare className="h-4 w-4 text-zinc-500" />
                   <span className="font-medium">Insert Equation</span>
                   <span className="ml-auto text-xs text-zinc-400 font-medium">⌘⌥E</span>
                 </DropdownMenu.Item>

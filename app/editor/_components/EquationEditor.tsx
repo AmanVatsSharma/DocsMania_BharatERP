@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Editor } from "@tiptap/react";
-import { Function, X, Check } from "lucide-react";
+import { FunctionSquareSquare, X, Check } from "lucide-react";
 import { clsx } from "clsx";
 import { toast } from "sonner";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -68,7 +68,7 @@ export default function EquationEditor(props: EquationEditorProps) {
           {/* Header */}
           <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
             <div className="flex items-center gap-2">
-              <Function className="h-5 w-5 text-zinc-600" />
+              <FunctionSquare className="h-5 w-5 text-zinc-600" />
               <Dialog.Title className="text-lg font-semibold text-zinc-900">Insert Equation</Dialog.Title>
             </div>
             <Dialog.Close asChild>
