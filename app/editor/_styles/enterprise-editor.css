@@ -1,7 +1,170 @@
 /**
- * Enterprise-Grade Editor Styles
- * Professional animations, transitions, and micro-interactions
+ * Premium, Modern Editor Styles - Google Docs inspired
+ * Clean UI with premium feel, subtle animations, refined typography
  */
+
+/* Animations */
+@keyframes slide-in-from-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation: slide-in-from-right 0.3s ease-out;
+}
+
+/* Global Editor Styles - Premium Typography */
+.ProseMirror {
+  outline: none;
+  padding: 5rem 6rem;
+  max-width: 816px;
+  margin: 0 auto;
+  background: white;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #202124;
+  letter-spacing: 0;
+}
+
+.ProseMirror p {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.ProseMirror h1 {
+  font-size: 2rem;
+  font-weight: 400;
+  margin: 1.5rem 0 0.5rem 0;
+  line-height: 1.3;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin: 1.25rem 0 0.5rem 0;
+  line-height: 1.3;
+}
+
+.ProseMirror h3 {
+  font-size: 1.25rem;
+  font-weight: 400;
+  margin: 1rem 0 0.5rem 0;
+  line-height: 1.3;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 2rem;
+  margin: 0.5rem 0;
+}
+
+.ProseMirror li {
+  margin: 0.25rem 0;
+  line-height: 1.6;
+}
+
+.ProseMirror blockquote {
+  border-left: 3px solid #e5e7eb;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.ProseMirror code {
+  background: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-family: ui-monospace, monospace;
+}
+
+.ProseMirror pre {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.ProseMirror table {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  width: 100%;
+}
+
+.ProseMirror td,
+.ProseMirror th {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.ProseMirror th {
+  background: #f9fafb;
+  font-weight: 500;
+}
+
+/* Page Break Styles */
+.page-break {
+  page-break-after: always;
+  break-after: page;
+  margin: 2rem 0;
+  border-top: 2px dashed #d4d4d8;
+  padding: 1rem 0;
+  text-align: center;
+  color: #71717a;
+  font-size: 0.75rem;
+  user-select: none;
+}
+
+@media print {
+  .page-break {
+    border-top: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Footnote Styles */
+.footnote-reference {
+  vertical-align: super;
+  font-size: 0.75em;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.footnote-reference:hover {
+  background-color: #dbeafe;
+}
+
+/* Equation Styles */
+.equation-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.equation-container.inline-equation {
+  display: inline-flex;
+  margin: 0 0.25rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.equation-display {
+  font-family: 'Courier New', monospace;
+  white-space: pre-wrap;
+}
 
 /* Smooth Animations */
 @keyframes fadeIn {
@@ -264,6 +427,21 @@
 .ProseMirror {
   min-height: 400px;
   outline: none;
+  /* Enable spell check */
+  spellcheck: true;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Spell check error styling */
+.ProseMirror [spellcheck="true"] {
+  /* Browser will show red underline for misspelled words */
+}
+
+/* Custom spell check indicator (if needed) */
+.ProseMirror mark.spell-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-bottom: 2px wavy rgba(239, 68, 68, 0.5);
+  text-decoration: none;
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {

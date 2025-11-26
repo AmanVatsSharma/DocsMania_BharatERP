@@ -27,6 +27,7 @@ model Document {
   projectId String
 
   versions  DocumentVersion[]
+  comments  Comment[]
   outgoingLinks DocLink[] @relation("LinkSource")
   incomingLinks DocLink[] @relation("LinkTarget")
 
@@ -135,4 +136,27 @@ model Template {
   
   @@index([category])
   @@index([isPublic])
+}
+
+model Comment {
+  id         String   @id @default(uuid())
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentId String
+  versionId  String?
+  authorId   String?
+  authorName String   @default("Anonymous")
+  authorEmail String?
+  content    String   @db.Text
+  resolved   Boolean  @default(false)
+  from       Int      // ProseMirror position start
+  to         Int      // ProseMirror position end
+  parent     Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId   String?
+  replies    Comment[] @relation("CommentReplies")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([documentId])
+  @@index([parentId])
+  @@index([resolved])
 }

@@ -50,6 +50,21 @@ import DocumentSettings from "@/app/editor/_components/DocumentSettings";
 import TemplateManager from "@/app/editor/_components/TemplateManager";
 import ComponentBuilder from "@/app/editor/_components/ComponentBuilder";
 import CustomComponentLibrary from "@/app/editor/_components/CustomComponentLibrary";
+import FindReplace from "@/app/editor/_components/FindReplace";
+import CommentsPanel from "@/app/editor/_components/CommentsPanel";
+import VersionHistory from "@/app/editor/_components/VersionHistory";
+import PageSetup, { type PageSettings } from "@/app/editor/_components/PageSetup";
+import TableOfContents from "@/app/editor/_components/TableOfContents";
+import ExportDialog from "@/app/editor/_components/ExportDialog";
+import ImportDialog from "@/app/editor/_components/ImportDialog";
+import DriveBrowser from "@/app/editor/_components/DriveBrowser";
+import SuggestionsMode from "@/app/editor/_components/SuggestionsMode";
+import FootnotesPanel from "@/app/editor/_components/FootnotesPanel";
+import EquationEditor from "@/app/editor/_components/EquationEditor";
+import WordCount from "@/app/editor/_components/WordCount";
+import { Footnote } from "@/lib/FootnoteExtension";
+import { Equation } from "@/lib/EquationExtension";
+import { PageBreak } from "@/lib/PageBreakExtension";
 
 // moved to lib/hooks.ts
 
@@ -97,6 +112,27 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [componentBuilderOpen, setComponentBuilderOpen] = React.useState(false);
   const [customComponentLibraryOpen, setCustomComponentLibraryOpen] = React.useState(false);
   const [documentMeta, setDocumentMeta] = React.useState<any>({});
+  const [floatingToolbarVisible, setFloatingToolbarVisible] = React.useState(false);
+  const [floatingToolbarPosition, setFloatingToolbarPosition] = React.useState<{ top: number; left: number } | null>(null);
+  const [findReplaceOpen, setFindReplaceOpen] = React.useState(false);
+  const [findReplaceMode, setFindReplaceMode] = React.useState<"find" | "replace">("find");
+  const [commentsOpen, setCommentsOpen] = React.useState(false);
+  const [versionHistoryOpen, setVersionHistoryOpen] = React.useState(false);
+  const [pageSetupOpen, setPageSetupOpen] = React.useState(false);
+  const [tocOpen, setTocOpen] = React.useState(false);
+  const [exportOpen, setExportOpen] = React.useState(false);
+  const [importOpen, setImportOpen] = React.useState(false);
+  const [driveBrowserOpen, setDriveBrowserOpen] = React.useState(false);
+  const [pageSettings, setPageSettings] = React.useState<PageSettings>({
+    pageSize: "letter",
+    width: 8.5,
+    height: 11,
+    orientation: "portrait",
+    margins: { top: 1, bottom: 1, left: 1, right: 1 },
+  });
+  const [suggestionsModeEnabled, setSuggestionsModeEnabled] = React.useState(false);
+  const [footnotesOpen, setFootnotesOpen] = React.useState(false);
+  const [equationEditorOpen, setEquationEditorOpen] = React.useState(false);
   const leftResizerRef = React.useRef<HTMLDivElement | null>(null);
   const rightResizerRef = React.useRef<HTMLDivElement | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -179,6 +215,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       TextStyleExtended,
       // Override base paragraph with enterprise attrs (indent, spacing)
       ParagraphExtended,
+      // Google Docs-like features
+      Footnote,
+      Equation,
+      PageBreak,
       Section.extend({
         addNodeView() {
           const nameLookup = (key: string) => {
@@ -192,6 +232,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     autofocus: true,
     immediatelyRender: false,
     editorProps: {
+      // Enable browser spell check
+      attributes: {
+        spellcheck: "true",
+      },
       handleDrop(view: any, event: DragEvent) {
         try {
           const dt = event.dataTransfer;
@@ -237,6 +281,70 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             void fetch(`/api/documents/${docId}/publish`, { method: "POST" });
             return true;
           }
+          // Find & Replace shortcuts
+          if (isMod && key === "f") {
+            event.preventDefault();
+            setFindReplaceMode("find");
+            setFindReplaceOpen(true);
+            logger.info("Mod+F: open find");
+            return true;
+          }
+            if (isMod && key === "h") {
+              event.preventDefault();
+              setFindReplaceMode("replace");
+              setFindReplaceOpen(true);
+              logger.info("Mod+H: open replace");
+              return true;
+            }
+            // Comments: Cmd+Shift+M
+            if (isMod && event.shiftKey && key === "m") {
+              event.preventDefault();
+              setCommentsOpen(!commentsOpen);
+              logger.info("Mod+Shift+M: toggle comments");
+              return true;
+            }
+            // Version History: Cmd+Alt+H
+            if (isMod && event.altKey && key === "h") {
+              event.preventDefault();
+              setVersionHistoryOpen(!versionHistoryOpen);
+              logger.info("Mod+Alt+H: toggle version history");
+              return true;
+            }
+            // Table of Contents: Cmd+Shift+O
+            if (isMod && event.shiftKey && key === "o") {
+              event.preventDefault();
+              setTocOpen(!tocOpen);
+              logger.info("Mod+Shift+O: toggle TOC");
+              return true;
+            }
+            // Export: Cmd+E
+            if (isMod && key === "e" && !event.shiftKey) {
+              event.preventDefault();
+              setExportOpen(true);
+              logger.info("Mod+E: open export");
+              return true;
+            }
+            // Footnotes: Cmd+Alt+F
+            if (isMod && event.altKey && key === "f") {
+              event.preventDefault();
+              setFootnotesOpen(!footnotesOpen);
+              logger.info("Mod+Alt+F: toggle footnotes");
+              return true;
+            }
+            // Equation: Cmd+Alt+E
+            if (isMod && event.altKey && key === "e") {
+              event.preventDefault();
+              setEquationEditorOpen(true);
+              logger.info("Mod+Alt+E: open equation editor");
+              return true;
+            }
+            // Suggestions Mode: Cmd+Alt+S
+            if (isMod && event.altKey && key === "s") {
+              event.preventDefault();
+              setSuggestionsModeEnabled(!suggestionsModeEnabled);
+              logger.info("Mod+Alt+S: toggle suggestions mode");
+              return true;
+            }
           // Spreadsheet-like navigation
           if (editor?.isActive("table")) {
             if (key === "tab") {
@@ -266,8 +374,22 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       },
       handlePaste: (view: any, event: ClipboardEvent, slice: any) => {
         try {
+          // Check for Paste Without Formatting (Cmd+Shift+V)
+          const isMod = event.metaKey || event.ctrlKey;
+          const isShift = event.shiftKey;
+          const pasteWithoutFormatting = isMod && isShift;
+          
           const text = event.clipboardData?.getData("text/plain") ?? "";
           const html = event.clipboardData?.getData("text/html") ?? "";
+          
+          // If paste without formatting, insert plain text only
+          if (pasteWithoutFormatting && text) {
+            event.preventDefault();
+            editor?.chain().focus().insertContent(text).run();
+            console.info("[Paste] Paste without formatting", { textLength: text.length });
+            toast.success("Pasted as plain text");
+            return true;
+          }
 
           // 1) If pasting into a table and content looks tabular, handle CSV/TSV paste
           if (editor?.isActive("table") && text) {
@@ -414,18 +536,50 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     },
     onSelectionUpdate: ({ editor }) => {
       try {
+        // Handle section selection
         if (editor.isActive("section")) {
           const attrs = editor.getAttributes("section");
           setSelectedSectionKey(attrs?.componentKey ?? null);
           setSelectedSectionProps(attrs?.props ?? {});
+          setFloatingToolbarVisible(false);
+          setFloatingToolbarPosition(null);
         } else {
           setSelectedSectionKey(null);
           setSelectedSectionProps(null);
+          
+          // Handle text selection for floating toolbar
+          const { from, to } = editor.state.selection;
+          const hasSelection = from !== to;
+          
+          if (hasSelection && !editor.isActive("table")) {
+            // Get selection coordinates
+            try {
+              const { view } = editor;
+              const startCoords = view.coordsAtPos(from);
+              const endCoords = view.coordsAtPos(to);
+              
+              // Position toolbar above selection, centered horizontally
+              const top = Math.min(startCoords.top, endCoords.top) - 10;
+              const left = (startCoords.left + endCoords.left) / 2;
+              
+              setFloatingToolbarPosition({ top, left });
+              setFloatingToolbarVisible(true);
+              console.debug("[FloatingToolbar] Showing at", { top, left, from, to });
+            } catch (coordError) {
+              console.error("[FloatingToolbar] Error calculating position", coordError);
+              setFloatingToolbarVisible(false);
+            }
+          } else {
+            setFloatingToolbarVisible(false);
+            setFloatingToolbarPosition(null);
+          }
         }
       } catch (e) {
         console.error("selection update error", e);
         setSelectedSectionKey(null);
         setSelectedSectionProps(null);
+        setFloatingToolbarVisible(false);
+        setFloatingToolbarPosition(null);
       }
     },
     onCreate: () => console.info("Tiptap editor created"),
@@ -866,15 +1020,27 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         onOpenSettings={() => setDocumentSettingsOpen(true)}
         onOpenDataSources={() => {}}
         onOpenCustomComponents={() => setCustomComponentLibraryOpen(true)}
-        onShare={() => {}}
-        onExport={() => {}}
+        onShare={() => {
+          toast.info("Share feature coming soon");
+        }}
+        onExport={() => setExportOpen(true)}
+        onImport={() => setImportOpen(true)}
+        onOpenDrive={() => setDriveBrowserOpen(true)}
+        onOpenComments={() => setCommentsOpen(true)}
+        onOpenVersionHistory={() => setVersionHistoryOpen(true)}
+        onOpenPageSetup={() => setPageSetupOpen(true)}
+        onOpenTOC={() => setTocOpen(true)}
+        onOpenFootnotes={() => setFootnotesOpen(true)}
+        onOpenEquation={() => setEquationEditorOpen(true)}
+        onToggleSuggestions={() => setSuggestionsModeEnabled(!suggestionsModeEnabled)}
+        wordCount={<WordCount editor={editor} />}
       />
       
       {/* Floating Toolbar for text formatting */}
       <FloatingToolbar
         editor={editor}
-        isVisible={false}
-        position={null}
+        isVisible={floatingToolbarVisible}
+        position={floatingToolbarPosition}
       />
       
       {/* Saving Indicator */}
@@ -890,6 +1056,129 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       />
       <SlashMenu editor={editor} components={components as any} open={slashOpen} setOpen={setSlashOpen} />
       <HelpOverlay open={helpOpen} onOpenChange={setHelpOpen} />
+      <FindReplace
+        editor={editor}
+        open={findReplaceOpen}
+        onOpenChange={setFindReplaceOpen}
+        mode={findReplaceMode}
+      />
+      
+      {/* Comments Panel */}
+      <CommentsPanel
+        editor={editor}
+        documentId={docId}
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+      />
+      
+      {/* Version History */}
+      <VersionHistory
+        documentId={docId}
+        open={versionHistoryOpen}
+        onOpenChange={setVersionHistoryOpen}
+        onRestore={(version) => {
+          editor?.commands.setContent(version.content);
+          toast.success(`Restored version ${version.version}`);
+        }}
+      />
+      
+      {/* Page Setup */}
+      <PageSetup
+        open={pageSetupOpen}
+        onOpenChange={setPageSetupOpen}
+        settings={pageSettings}
+        onSave={(settings) => {
+          setPageSettings(settings);
+          // Store in document meta
+          const updatedMeta = { ...documentMeta, pageSettings: settings };
+          setDocumentMeta(updatedMeta);
+          // Save to backend
+          fetch(`/api/documents/${docId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ meta: updatedMeta }),
+          }).catch((e) => console.error("Failed to save page settings", e));
+        }}
+      />
+      
+      {/* Table of Contents */}
+      <TableOfContents
+        editor={editor}
+        open={tocOpen}
+        onOpenChange={setTocOpen}
+      />
+      
+      {/* Export Dialog */}
+      <ExportDialog
+        editor={editor}
+        documentTitle={title}
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+      />
+      
+      {/* Import Dialog */}
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={(content, importTitle) => {
+          // Set imported content in editor
+          editor?.commands.setContent(content);
+          // Optionally update title
+          if (importTitle && importTitle !== title) {
+            setTitle(importTitle);
+            // Save title
+            fetch(`/api/documents/${docId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ title: importTitle }),
+            }).catch((e) => console.error("Failed to save title", e));
+          }
+          toast.success(`Imported "${importTitle}"`);
+        }}
+      />
+      
+      {/* Drive Browser */}
+      <DriveBrowser
+        open={driveBrowserOpen}
+        onOpenChange={setDriveBrowserOpen}
+        onOpenFile={(file) => {
+          // File is already imported, just set content
+          if ((file as any).content) {
+            editor?.commands.setContent((file as any).content);
+            if ((file as any).title) {
+              setTitle((file as any).title);
+            }
+            toast.success(`Opened "${file.name}"`);
+          }
+        }}
+        driveConfig={{
+          bucket: process.env.NEXT_PUBLIC_AWS_S3_BUCKET || "",
+          region: process.env.NEXT_PUBLIC_AWS_REGION || "us-east-1",
+        }}
+      />
+      
+      {/* Suggestions Mode */}
+      <SuggestionsMode
+        editor={editor}
+        enabled={suggestionsModeEnabled}
+        onToggle={setSuggestionsModeEnabled}
+        currentAuthor="You"
+      />
+      
+      {/* Footnotes Panel */}
+      <FootnotesPanel
+        editor={editor}
+        open={footnotesOpen}
+        onOpenChange={setFootnotesOpen}
+      />
+      
+      {/* Equation Editor */}
+      <EquationEditor
+        editor={editor}
+        open={equationEditorOpen}
+        onOpenChange={setEquationEditorOpen}
+      />
+      
       <MediaManager 
         open={mediaManagerOpen} 
         onOpenChange={setMediaManagerOpen}
@@ -1094,7 +1383,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                 } : undefined}
               >
                 <div style={{ overflowX: "auto" }}>
-                  <EditorContent editor={editor} />
+                  <EditorContent 
+                    editor={editor}
+                    className="spell-check-enabled"
+                    style={{ 
+                      // Enable browser spell check styling
+                      WebkitTextSizeAdjust: '100%',
+                    }}
+                  />
                 </div>
               </EditorContextMenu>
             </div>
