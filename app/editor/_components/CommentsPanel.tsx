@@ -235,48 +235,50 @@ export default function CommentsPanel(props: CommentsPanelProps) {
     <div
       key={comment.id}
       className={clsx(
-        "border-l-2 pl-3 py-2",
-        comment.resolved ? "border-zinc-200 opacity-60" : "border-blue-500",
-        depth > 0 && "ml-4"
+        "rounded-xl border-l-4 pl-4 pr-4 py-3 mb-3 transition-all",
+        comment.resolved 
+          ? "border-zinc-200 bg-zinc-50/50 opacity-75" 
+          : "border-blue-500 bg-white shadow-sm hover:shadow-md",
+        depth > 0 && "ml-6"
       )}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-sm text-zinc-900">{comment.authorName}</span>
-            <span className="text-xs text-zinc-500">{formatDate(comment.createdAt)}</span>
+          <div className="flex items-center gap-2.5 mb-2">
+            <span className="font-semibold text-sm text-zinc-900">{comment.authorName}</span>
+            <span className="text-xs text-zinc-500 font-medium">{formatDate(comment.createdAt)}</span>
             {comment.resolved && (
-              <span className="text-xs text-green-600 font-medium">Resolved</span>
+              <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700 font-semibold">Resolved</span>
             )}
           </div>
-          <p className="text-sm text-zinc-700 whitespace-pre-wrap">{comment.content}</p>
+          <p className="text-sm text-zinc-700 whitespace-pre-wrap leading-relaxed">{comment.content}</p>
           {comment.from !== comment.to && (
             <button
               onClick={() => jumpToComment(comment)}
-              className="mt-2 text-xs text-blue-600 hover:text-blue-700 underline"
+              className="mt-2 text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors"
             >
-              Jump to location
+              Jump to location →
             </button>
           )}
         </div>
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button className="rounded p-1 hover:bg-zinc-100">
+            <button className="rounded-lg p-1.5 hover:bg-zinc-100/80 transition-all">
               <MoreVertical className="h-4 w-4 text-zinc-500" />
             </button>
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
-            <DropdownMenu.Content className="z-50 min-w-[160px] rounded-lg border border-zinc-200 bg-white p-1 shadow-xl">
+            <DropdownMenu.Content className="z-50 min-w-[180px] rounded-xl border border-zinc-200/80 bg-white p-1.5 shadow-xl backdrop-blur-sm">
               <DropdownMenu.Item
                 onClick={() => toggleResolve(comment.id, comment.resolved)}
-                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-zinc-100"
+                className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-emerald-50 hover:text-emerald-900"
               >
                 <Check className="h-4 w-4" />
                 {comment.resolved ? "Unresolve" : "Resolve"}
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 onClick={() => deleteComment(comment.id)}
-                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-red-600 hover:bg-red-50"
+                className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
               >
                 <Trash2 className="h-4 w-4" />
                 Delete
@@ -290,21 +292,21 @@ export default function CommentsPanel(props: CommentsPanelProps) {
       {!comment.resolved && (
         <button
           onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-          className="mt-2 flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+          className="mt-3 flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
         >
-          <Reply className="h-3 w-3" />
+          <Reply className="h-3.5 w-3.5" />
           Reply
         </button>
       )}
 
       {/* Reply input */}
       {replyingTo === comment.id && (
-        <div className="mt-2 space-y-2">
+        <div className="mt-3 space-y-2 rounded-lg bg-zinc-50/50 p-3">
           <textarea
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
             placeholder="Write a reply..."
-            className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            className="w-full rounded-lg border border-zinc-200/60 bg-white px-3 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 placeholder:text-zinc-400"
             rows={2}
           />
           <div className="flex items-center gap-2">
@@ -312,13 +314,13 @@ export default function CommentsPanel(props: CommentsPanelProps) {
               onClick={() => addReply(comment.id)}
               disabled={!replyText.trim()}
               className={clsx(
-                "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
+                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all",
                 replyText.trim()
-                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700 hover:shadow-md active:scale-[0.98]"
                   : "bg-zinc-100 text-zinc-400 cursor-not-allowed"
               )}
             >
-              <Send className="h-3 w-3" />
+              <Send className="h-3.5 w-3.5" />
               Reply
             </button>
             <button
@@ -326,7 +328,7 @@ export default function CommentsPanel(props: CommentsPanelProps) {
                 setReplyingTo(null);
                 setReplyText("");
               }}
-              className="rounded-lg px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100"
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition-colors"
             >
               Cancel
             </button>
@@ -344,42 +346,44 @@ export default function CommentsPanel(props: CommentsPanelProps) {
   );
 
   return (
-    <div className="fixed right-0 top-0 z-50 h-full w-96 border-l border-zinc-200 bg-white shadow-2xl flex flex-col">
+    <div className="fixed right-0 top-0 z-50 h-full w-96 border-l border-zinc-200/60 bg-white/95 backdrop-blur-sm shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-zinc-600" />
-          <h2 className="font-semibold text-zinc-900">Comments</h2>
+      <div className="flex items-center justify-between border-b border-zinc-200/60 bg-gradient-to-r from-white to-zinc-50/50 px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
+            <MessageSquare className="h-4 w-4 text-blue-600" />
+          </div>
+          <h2 className="font-semibold text-lg text-zinc-900">Comments</h2>
           {comments.length > 0 && (
-            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
+            <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">
               {comments.filter((c) => !c.resolved).length}
             </span>
           )}
         </div>
         <button
           onClick={() => onOpenChange(false)}
-          className="rounded p-1 hover:bg-zinc-100"
+          className="rounded-lg p-1.5 hover:bg-zinc-100/80 transition-all hover:shadow-sm"
         >
           <X className="h-5 w-5 text-zinc-500" />
         </button>
       </div>
 
       {/* New Comment Input */}
-      <div className="border-b border-zinc-200 p-4">
+      <div className="border-b border-zinc-200/60 bg-white p-5">
         <textarea
           value={newCommentText}
           onChange={(e) => setNewCommentText(e.target.value)}
           placeholder="Add a comment on selected text..."
-          className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+          className="w-full rounded-xl border border-zinc-200/60 bg-zinc-50/50 px-4 py-3 text-sm outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 placeholder:text-zinc-400"
           rows={3}
         />
         <button
           onClick={createComment}
           disabled={!newCommentText.trim()}
           className={clsx(
-            "mt-2 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
+            "mt-3 flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all",
             newCommentText.trim()
-              ? "bg-blue-600 text-white hover:bg-blue-700"
+              ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-sm hover:shadow-md hover:from-blue-700 hover:to-blue-800 active:scale-[0.98]"
               : "bg-zinc-100 text-zinc-400 cursor-not-allowed"
           )}
         >
@@ -389,19 +393,24 @@ export default function CommentsPanel(props: CommentsPanelProps) {
       </div>
 
       {/* Comments List */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-5 bg-gradient-to-b from-white to-zinc-50/30">
         {loading ? (
-          <div className="flex items-center justify-center py-8 text-sm text-zinc-500">
-            Loading comments...
+          <div className="flex items-center justify-center py-12 text-sm font-medium text-zinc-500">
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-blue-600"></div>
+              Loading comments...
+            </div>
           </div>
         ) : comments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <MessageSquare className="h-12 w-12 text-zinc-300 mb-3" />
-            <p className="text-sm text-zinc-500">No comments yet</p>
-            <p className="mt-1 text-xs text-zinc-400">Select text and add a comment</p>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 mb-4">
+              <MessageSquare className="h-8 w-8 text-zinc-400" />
+            </div>
+            <p className="text-sm font-semibold text-zinc-700">No comments yet</p>
+            <p className="mt-1.5 text-xs text-zinc-500">Select text and add a comment</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {comments.map((comment) => renderComment(comment))}
           </div>
         )}

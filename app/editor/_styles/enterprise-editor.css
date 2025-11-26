@@ -1,16 +1,37 @@
 /**
- * Clean, Modern Editor Styles - Google Docs inspired
- * Minimal borders, clean spacing, subtle interactions
+ * Premium, Modern Editor Styles - Google Docs inspired
+ * Clean UI with premium feel, subtle animations, refined typography
  */
 
-/* Global Editor Styles */
+/* Animations */
+@keyframes slide-in-from-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation: slide-in-from-right 0.3s ease-out;
+}
+
+/* Global Editor Styles - Premium Typography */
 .ProseMirror {
   outline: none;
-  padding: 4rem 4rem;
+  padding: 5rem 6rem;
   max-width: 816px;
   margin: 0 auto;
   background: white;
   min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #202124;
+  letter-spacing: 0;
 }
 
 .ProseMirror p {

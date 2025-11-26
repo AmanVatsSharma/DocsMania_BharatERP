@@ -75,19 +75,20 @@ export default function WordCount(props: WordCountProps) {
       <Popover.Trigger asChild>
         <button
           className={clsx(
-            "flex items-center gap-1 rounded px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-100 transition-colors",
+            "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100/80 transition-all hover:shadow-sm",
             showAlways && "bg-zinc-50"
           )}
           title="Word count"
         >
-          <span className="font-normal">{formatNumber(stats.words)} words</span>
+          <FileText className="h-3.5 w-3.5 text-zinc-500" />
+          <span>{formatNumber(stats.words)} words</span>
         </button>
       </Popover.Trigger>
 
       <Popover.Portal>
         <Popover.Content
-          className="z-50 w-64 rounded-lg border border-zinc-200 bg-white p-3 shadow-lg"
-          sideOffset={5}
+          className="z-50 w-64 rounded-xl border border-zinc-200/80 bg-white p-4 shadow-xl backdrop-blur-sm"
+          sideOffset={8}
         >
           <div className="space-y-3">
             <div className="flex items-center justify-between">
