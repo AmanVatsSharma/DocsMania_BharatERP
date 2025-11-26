@@ -4,7 +4,8 @@ import React from "react";
 import { 
   ChevronRight, Command, ImagePlus, Rocket, Search, Loader2, 
   Sparkles, Settings, Eye, Database, Code, Users, Clock,
-  CheckCircle2, AlertCircle, MoreHorizontal, Share2, Download
+  CheckCircle2, AlertCircle, MoreHorizontal, Share2, Download,
+  MessageSquare, History, FileText, List
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { clsx } from "clsx";
@@ -26,6 +27,10 @@ export interface TopBarEnhancedProps {
   onOpenCustomComponents?: () => void;
   onShare?: () => void;
   onExport?: () => void;
+  onOpenComments?: () => void;
+  onOpenVersionHistory?: () => void;
+  onOpenPageSetup?: () => void;
+  onOpenTOC?: () => void;
 }
 
 /**
@@ -52,6 +57,10 @@ export default function TopBarEnhanced(props: TopBarEnhancedProps) {
     onOpenCustomComponents,
     onShare,
     onExport,
+    onOpenComments,
+    onOpenVersionHistory,
+    onOpenPageSetup,
+    onOpenTOC,
   } = props;
 
   const timeAgo = lastSaved ? getTimeAgo(lastSaved) : null;
@@ -195,6 +204,39 @@ export default function TopBarEnhanced(props: TopBarEnhancedProps) {
                 >
                   <Download className="h-4 w-4" />
                   Export
+                  <span className="ml-auto text-xs text-zinc-400">⌘E</span>
+                </DropdownMenu.Item>
+                <DropdownMenu.Separator className="my-1 h-px bg-zinc-200" />
+                <DropdownMenu.Item
+                  onClick={onOpenComments}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 outline-none hover:bg-zinc-50"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Comments
+                  <span className="ml-auto text-xs text-zinc-400">⌘⇧M</span>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  onClick={onOpenVersionHistory}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 outline-none hover:bg-zinc-50"
+                >
+                  <History className="h-4 w-4" />
+                  Version History
+                  <span className="ml-auto text-xs text-zinc-400">⌘⌥H</span>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  onClick={onOpenTOC}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 outline-none hover:bg-zinc-50"
+                >
+                  <List className="h-4 w-4" />
+                  Table of Contents
+                  <span className="ml-auto text-xs text-zinc-400">⌘⇧O</span>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  onClick={onOpenPageSetup}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 outline-none hover:bg-zinc-50"
+                >
+                  <FileText className="h-4 w-4" />
+                  Page Setup
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Portal>

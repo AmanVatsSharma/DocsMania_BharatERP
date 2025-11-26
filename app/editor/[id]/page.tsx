@@ -51,6 +51,11 @@ import TemplateManager from "@/app/editor/_components/TemplateManager";
 import ComponentBuilder from "@/app/editor/_components/ComponentBuilder";
 import CustomComponentLibrary from "@/app/editor/_components/CustomComponentLibrary";
 import FindReplace from "@/app/editor/_components/FindReplace";
+import CommentsPanel from "@/app/editor/_components/CommentsPanel";
+import VersionHistory from "@/app/editor/_components/VersionHistory";
+import PageSetup, { type PageSettings } from "@/app/editor/_components/PageSetup";
+import TableOfContents from "@/app/editor/_components/TableOfContents";
+import ExportDialog from "@/app/editor/_components/ExportDialog";
 
 // moved to lib/hooks.ts
 
@@ -102,6 +107,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [floatingToolbarPosition, setFloatingToolbarPosition] = React.useState<{ top: number; left: number } | null>(null);
   const [findReplaceOpen, setFindReplaceOpen] = React.useState(false);
   const [findReplaceMode, setFindReplaceMode] = React.useState<"find" | "replace">("find");
+  const [commentsOpen, setCommentsOpen] = React.useState(false);
+  const [versionHistoryOpen, setVersionHistoryOpen] = React.useState(false);
+  const [pageSetupOpen, setPageSetupOpen] = React.useState(false);
+  const [tocOpen, setTocOpen] = React.useState(false);
+  const [exportOpen, setExportOpen] = React.useState(false);
+  const [pageSettings, setPageSettings] = React.useState<PageSettings>({
+    pageSize: "letter",
+    width: 8.5,
+    height: 11,
+    orientation: "portrait",
+    margins: { top: 1, bottom: 1, left: 1, right: 1 },
+  });
   const leftResizerRef = React.useRef<HTMLDivElement | null>(null);
   const rightResizerRef = React.useRef<HTMLDivElement | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -254,13 +271,41 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             logger.info("Mod+F: open find");
             return true;
           }
-          if (isMod && key === "h") {
-            event.preventDefault();
-            setFindReplaceMode("replace");
-            setFindReplaceOpen(true);
-            logger.info("Mod+H: open replace");
-            return true;
-          }
+            if (isMod && key === "h") {
+              event.preventDefault();
+              setFindReplaceMode("replace");
+              setFindReplaceOpen(true);
+              logger.info("Mod+H: open replace");
+              return true;
+            }
+            // Comments: Cmd+Shift+M
+            if (isMod && event.shiftKey && key === "m") {
+              event.preventDefault();
+              setCommentsOpen(!commentsOpen);
+              logger.info("Mod+Shift+M: toggle comments");
+              return true;
+            }
+            // Version History: Cmd+Alt+H
+            if (isMod && event.altKey && key === "h") {
+              event.preventDefault();
+              setVersionHistoryOpen(!versionHistoryOpen);
+              logger.info("Mod+Alt+H: toggle version history");
+              return true;
+            }
+            // Table of Contents: Cmd+Shift+O
+            if (isMod && event.shiftKey && key === "o") {
+              event.preventDefault();
+              setTocOpen(!tocOpen);
+              logger.info("Mod+Shift+O: toggle TOC");
+              return true;
+            }
+            // Export: Cmd+E
+            if (isMod && key === "e" && !event.shiftKey) {
+              event.preventDefault();
+              setExportOpen(true);
+              logger.info("Mod+E: open export");
+              return true;
+            }
           // Spreadsheet-like navigation
           if (editor?.isActive("table")) {
             if (key === "tab") {
@@ -936,8 +981,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         onOpenSettings={() => setDocumentSettingsOpen(true)}
         onOpenDataSources={() => {}}
         onOpenCustomComponents={() => setCustomComponentLibraryOpen(true)}
-        onShare={() => {}}
-        onExport={() => {}}
+        onShare={() => {
+          toast.info("Share feature coming soon");
+        }}
+        onExport={() => setExportOpen(true)}
+        onOpenComments={() => setCommentsOpen(true)}
+        onOpenVersionHistory={() => setVersionHistoryOpen(true)}
+        onOpenPageSetup={() => setPageSetupOpen(true)}
+        onOpenTOC={() => setTocOpen(true)}
       />
       
       {/* Floating Toolbar for text formatting */}
@@ -966,6 +1017,60 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         onOpenChange={setFindReplaceOpen}
         mode={findReplaceMode}
       />
+      
+      {/* Comments Panel */}
+      <CommentsPanel
+        editor={editor}
+        documentId={docId}
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+      />
+      
+      {/* Version History */}
+      <VersionHistory
+        documentId={docId}
+        open={versionHistoryOpen}
+        onOpenChange={setVersionHistoryOpen}
+        onRestore={(version) => {
+          editor?.commands.setContent(version.content);
+          toast.success(`Restored version ${version.version}`);
+        }}
+      />
+      
+      {/* Page Setup */}
+      <PageSetup
+        open={pageSetupOpen}
+        onOpenChange={setPageSetupOpen}
+        settings={pageSettings}
+        onSave={(settings) => {
+          setPageSettings(settings);
+          // Store in document meta
+          const updatedMeta = { ...documentMeta, pageSettings: settings };
+          setDocumentMeta(updatedMeta);
+          // Save to backend
+          fetch(`/api/documents/${docId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ meta: updatedMeta }),
+          }).catch((e) => console.error("Failed to save page settings", e));
+        }}
+      />
+      
+      {/* Table of Contents */}
+      <TableOfContents
+        editor={editor}
+        open={tocOpen}
+        onOpenChange={setTocOpen}
+      />
+      
+      {/* Export Dialog */}
+      <ExportDialog
+        editor={editor}
+        documentTitle={title}
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+      />
+      
       <MediaManager 
         open={mediaManagerOpen} 
         onOpenChange={setMediaManagerOpen}
