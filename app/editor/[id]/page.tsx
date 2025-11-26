@@ -56,6 +56,8 @@ import VersionHistory from "@/app/editor/_components/VersionHistory";
 import PageSetup, { type PageSettings } from "@/app/editor/_components/PageSetup";
 import TableOfContents from "@/app/editor/_components/TableOfContents";
 import ExportDialog from "@/app/editor/_components/ExportDialog";
+import ImportDialog from "@/app/editor/_components/ImportDialog";
+import DriveBrowser from "@/app/editor/_components/DriveBrowser";
 
 // moved to lib/hooks.ts
 
@@ -112,6 +114,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [pageSetupOpen, setPageSetupOpen] = React.useState(false);
   const [tocOpen, setTocOpen] = React.useState(false);
   const [exportOpen, setExportOpen] = React.useState(false);
+  const [importOpen, setImportOpen] = React.useState(false);
+  const [driveBrowserOpen, setDriveBrowserOpen] = React.useState(false);
   const [pageSettings, setPageSettings] = React.useState<PageSettings>({
     pageSize: "letter",
     width: 8.5,
@@ -985,6 +989,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           toast.info("Share feature coming soon");
         }}
         onExport={() => setExportOpen(true)}
+        onImport={() => setImportOpen(true)}
+        onOpenDrive={() => setDriveBrowserOpen(true)}
         onOpenComments={() => setCommentsOpen(true)}
         onOpenVersionHistory={() => setVersionHistoryOpen(true)}
         onOpenPageSetup={() => setPageSetupOpen(true)}
@@ -1069,6 +1075,47 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         documentTitle={title}
         open={exportOpen}
         onOpenChange={setExportOpen}
+      />
+      
+      {/* Import Dialog */}
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={(content, importTitle) => {
+          // Set imported content in editor
+          editor?.commands.setContent(content);
+          // Optionally update title
+          if (importTitle && importTitle !== title) {
+            setTitle(importTitle);
+            // Save title
+            fetch(`/api/documents/${docId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ title: importTitle }),
+            }).catch((e) => console.error("Failed to save title", e));
+          }
+          toast.success(`Imported "${importTitle}"`);
+        }}
+      />
+      
+      {/* Drive Browser */}
+      <DriveBrowser
+        open={driveBrowserOpen}
+        onOpenChange={setDriveBrowserOpen}
+        onOpenFile={(file) => {
+          // File is already imported, just set content
+          if ((file as any).content) {
+            editor?.commands.setContent((file as any).content);
+            if ((file as any).title) {
+              setTitle((file as any).title);
+            }
+            toast.success(`Opened "${file.name}"`);
+          }
+        }}
+        driveConfig={{
+          bucket: process.env.NEXT_PUBLIC_AWS_S3_BUCKET || "",
+          region: process.env.NEXT_PUBLIC_AWS_REGION || "us-east-1",
+        }}
       />
       
       <MediaManager 

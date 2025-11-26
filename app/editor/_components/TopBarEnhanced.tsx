@@ -5,7 +5,7 @@ import {
   ChevronRight, Command, ImagePlus, Rocket, Search, Loader2, 
   Sparkles, Settings, Eye, Database, Code, Users, Clock,
   CheckCircle2, AlertCircle, MoreHorizontal, Share2, Download,
-  MessageSquare, History, FileText, List
+  MessageSquare, History, FileText, List, Upload, Folder
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { clsx } from "clsx";
@@ -27,6 +27,8 @@ export interface TopBarEnhancedProps {
   onOpenCustomComponents?: () => void;
   onShare?: () => void;
   onExport?: () => void;
+  onImport?: () => void;
+  onOpenDrive?: () => void;
   onOpenComments?: () => void;
   onOpenVersionHistory?: () => void;
   onOpenPageSetup?: () => void;
@@ -57,6 +59,8 @@ export default function TopBarEnhanced(props: TopBarEnhancedProps) {
     onOpenCustomComponents,
     onShare,
     onExport,
+    onImport,
+    onOpenDrive,
     onOpenComments,
     onOpenVersionHistory,
     onOpenPageSetup,
@@ -205,6 +209,20 @@ export default function TopBarEnhanced(props: TopBarEnhancedProps) {
                   <Download className="h-4 w-4" />
                   Export
                   <span className="ml-auto text-xs text-zinc-400">⌘E</span>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  onClick={onImport}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 outline-none hover:bg-zinc-50"
+                >
+                  <Upload className="h-4 w-4" />
+                  Import Document
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  onClick={onOpenDrive}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 outline-none hover:bg-zinc-50"
+                >
+                  <Folder className="h-4 w-4" />
+                  Open from Drive
                 </DropdownMenu.Item>
                 <DropdownMenu.Separator className="my-1 h-px bg-zinc-200" />
                 <DropdownMenu.Item
